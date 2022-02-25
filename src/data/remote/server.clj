@@ -26,73 +26,91 @@
 
 ;; defrecords represent remote wire objects and print as "r/... data"
 (defrecord Ref [id])
-(defrecord Rvec [id count])
-(defrecord Rset [id count])
-(defrecord Rseq [head rest])
+(defrecord RVec [id count])
+(defrecord RSet [id count])
+(defrecord RMap [id count])
+(defrecord RSeq [head rest])
+(defrecord RMapEntry [kv])
 
 (defmethod print-method Ref [rref ^java.io.Writer w]
   (.write w (str "#r"))
   (@#'clojure.core/print-map rref @#'clojure.core/pr-on w))
 
-(defmethod print-method Rvec [rref ^java.io.Writer w]
+(defmethod print-method RVec [rref ^java.io.Writer w]
   (.write w (str "#r/vec"))
   (let [{:keys [id count]} rref]
     (@#'clojure.core/print-map {:r/id id :count count} @#'clojure.core/pr-on w)))
 
-(defmethod print-method Rset [rref ^java.io.Writer w]
+(defmethod print-method RSet [rref ^java.io.Writer w]
   (.write w (str "#r/set"))
   (let [{:keys [id count]} rref]
     (@#'clojure.core/print-map {:r/id id :count count} @#'clojure.core/pr-on w)))
 
-(defmethod print-method Rseq [rref ^java.io.Writer w]
+(defmethod print-method RMap [rref ^java.io.Writer w]
+  (.write w (str "#r/map"))
+  (let [{:keys [id count]} rref]
+    (@#'clojure.core/print-map {:r/id id :count count} @#'clojure.core/pr-on w)))
+
+(defmethod print-method RMapEntry [rref ^java.io.Writer w]
+  (.write w (str "#r/kv"))
+  (.write w (str (:kv rref))))
+
+(defmethod print-method RSeq [rref ^java.io.Writer w]
   (.write w (str "#r/seq"))
   (let [{:keys [head rest]} rref]
     (@#'clojure.core/print-map {:head head :r/id rest} @#'clojure.core/pr-on w)))
 
 (defn remotify-head
-  "remotify the first n items in the head of coll.  Returns
-  nil if the entire collection fits in n and is unchanged by
-  remotify."
+  "Remotify the first *remotify-length* items in the head of coll"
   [server coll]
   (loop [coll coll
          result (transient [])
-         n *remotify-length*
-         datafied? false]
+         n *remotify-length*]
     (if (or (nil? coll) (zero? n))
-      (when (or datafied? (seq coll)) (persistent! result))
+      (persistent! result)
       (let [[item & more] coll
             d (remotify item server)]
         (recur
          more
          (conj! result d)
-         (dec n)
-         (or datafied? (not (identical? d item))))))))
+         (dec n))))))
 
 (defn remotify-set
   [server coll]
-  (if (< (count coll) *remotify-length*)
+  (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
       (with-meta (into #{} (remotify-head server coll)) {:r/id (cache-remote-ref server coll)})
       coll)
-    (map->Rset {:id (cache-remote-ref server coll)
+    (map->RSet {:id (cache-remote-ref server coll)
+                :count (count coll)})))
+
+(defn remotify-map
+  [server coll]
+  (if (<= (count coll) *remotify-length*)
+    (if (has-remotes? coll)
+      (with-meta (apply hash-map (interleave (remotify-head server (keys coll))
+                                             (remotify-head server (vals coll))))
+        {:r/id (cache-remote-ref server coll)})
+      coll)
+    (map->RMap {:id (cache-remote-ref server coll)
                 :count (count coll)})))
 
 (defn remotify-vector
   [server coll]
-  (if (< (count coll) *remotify-length*)
+  (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
       (with-meta (into [] (remotify-head server coll)) {:r/id (cache-remote-ref server coll)})
       coll)
-    (map->Rset {:id (cache-remote-ref server coll)
+    (map->RVec {:id (cache-remote-ref server coll)
                 :count (count coll)})))
 
 (defn remotify-seq
   [server coll]
-  (if (< (count coll) *remotify-length*)
+  (if (<= (bounded-count *remotify-length* coll) *remotify-length*)
     (if (has-remotes? coll)
       (with-meta (remotify-head server coll) {:r/id (cache-remote-ref server coll)})
       coll)
-    (map->Rseq {:head (take *remotify-length* coll)
+    (map->RSeq {:head (take *remotify-length* coll)
                 :rest (cache-remote-ref server (drop *remotify-length* coll))})))
 
 (extend-protocol p/Server
@@ -127,6 +145,21 @@
 (extend-protocol p/Remotify
   Object
   (-remotify [obj server] (map->Ref {:id (cache-remote-ref server obj)}))
+
+  clojure.lang.IMapEntry
+  (-remotify
+    [obj server]
+    (let [[k v] obj
+          rk (remotify k server)
+          rv (remotify v server)]
+      (->RMapEntry [rk rv])))
+
+  clojure.lang.Associative
+  (-remotify
+    [obj server]
+    (if (instance? clojure.lang.IPersistentCollection obj)
+      (remotify-map server obj)
+      (map->Ref {:id (cache-remote-ref server obj)})))
 
   clojure.lang.PersistentHashSet
   (-remotify [coll server] (remotify-set server coll))
