@@ -16,6 +16,8 @@
    (into [] (range 1000))
    {:a 1 :b 2}
    (first {:a 1 :b 2})
+   (zipmap (range 100)
+           (repeat 42))
    {:a 1 :b (Object.)}
    [:a :b (Object.) :d :e]
    (list :a :b (Object.) :d :e)
@@ -24,7 +26,9 @@
 
 (map server/has-remotes? objects)
 
-(def server (java.util.concurrent.ConcurrentHashMap.))
+(def cache-builder (-> (com.google.common.cache.CacheBuilder/newBuilder)
+                       (.maximumSize 100000)))
+(def server (server/create-remote-cache cache-builder))
 
 (doseq [obj objects]
   (prn obj)
@@ -32,7 +36,6 @@
   (prn (server/remotify obj server))
   (prn))
 
-(server/remotify {:A 1 :B (Object.)} server)
 
 
 

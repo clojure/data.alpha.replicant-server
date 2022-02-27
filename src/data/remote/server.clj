@@ -1,5 +1,6 @@
 (ns data.remote.server
   (:import
+   [com.google.common.cache CacheBuilder RemovalListener Cache]
    [java.util Collection]
    [java.util.concurrent ConcurrentMap])
   (:require
@@ -8,10 +9,55 @@
 (def ^:dynamic *remotify-length* 25)
 (def ^:dynamic *remotify-level* 3)
 
-(defn cache-remote-ref
-  "Returns ref uuid."
+(defn- ju-function
+  "Wrap Clojure function as j.u.Function."
+  [f]
+  (reify java.util.function.Function
+    (apply [_ x] (f x))))
+
+(defn- gc-removed-value-listener
+  "Return a guava removal listener that calls f on the removed value."
+  [f]
+  (reify RemovalListener
+    (onRemoval [_ note] (f (.getValue note)))))
+
+;; create with create-remote-cache
+(deftype RemoteCache
+    [^ConcurrentMap identity->rid
+     ^Cache rid->obj]
+  p/Server
+  (-object->rid
+    [_ obj]
+    (.computeIfAbsent
+     identity->rid
+     (System/identityHashCode obj)
+     (-> (fn [_] (let [rid (java.util.UUID/randomUUID)]
+                   (.put rid->obj rid obj)
+                   rid))
+      ju-function)))
+  (-rid->object
+    [_ k]
+    (.getIfPresent rid->obj k)))
+
+(defn create-remote-cache
+  "Given a guava cache builder, return a p/Server that uses uuids for remote ids."
+  [^CacheBuilder builder]
+  (let [identity->rid (java.util.concurrent.ConcurrentHashMap.)
+        rid->obj (.. builder
+                     (removalListener
+                      (-> (fn [obj]
+                            (.remove identity->rid (System/identityHashCode obj)))
+                          gc-removed-value-listener))
+                     build)]
+    (RemoteCache. identity->rid rid->obj)))
+
+(defn object->rid
   [server obj]
-  (p/-cache-remote-ref server obj))
+  (p/-object->rid server obj))
+
+(defn rid->object
+  [server obj]
+  (p/-rid->object server obj))
 
 (defn has-remotes?
   "Returns true if remotify of obj would include remote object references."
@@ -79,9 +125,9 @@
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into #{} (remotify-head server coll)) {:r/id (cache-remote-ref server coll)})
+      (with-meta (into #{} (remotify-head server coll)) {:r/id (object->rid server coll)})
       coll)
-    (map->RSet {:id (cache-remote-ref server coll)
+    (map->RSet {:id (object->rid server coll)
                 :count (count coll)})))
 
 (defn remotify-map
@@ -90,36 +136,28 @@
     (if (has-remotes? coll)
       (with-meta (apply hash-map (interleave (remotify-head server (keys coll))
                                              (remotify-head server (vals coll))))
-        {:r/id (cache-remote-ref server coll)})
+        {:r/id (object->rid server coll)})
       coll)
-    (map->RMap {:id (cache-remote-ref server coll)
+    (map->RMap {:id (object->rid server coll)
                 :count (count coll)})))
 
 (defn remotify-vector
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into [] (remotify-head server coll)) {:r/id (cache-remote-ref server coll)})
+      (with-meta (into [] (remotify-head server coll)) {:r/id (object->rid server coll)})
       coll)
-    (map->RVec {:id (cache-remote-ref server coll)
+    (map->RVec {:id (object->rid server coll)
                 :count (count coll)})))
 
 (defn remotify-seq
   [server coll]
   (if (<= (bounded-count *remotify-length* coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (remotify-head server coll) {:r/id (cache-remote-ref server coll)})
+      (with-meta (remotify-head server coll) {:r/id (object->rid server coll)})
       coll)
     (map->RSeq {:head (take *remotify-length* coll)
-                :rest (cache-remote-ref server (drop *remotify-length* coll))})))
-
-(extend-protocol p/Server
-  java.util.concurrent.ConcurrentMap
-  (-cache-remote-ref
-    [m obj]
-    (let [id (long (System/identityHashCode obj))]
-      (.putIfAbsent m id {:obj obj :uuid (java.util.UUID/randomUUID)})
-      (:uuid (.get m id)))))
+                :rest (object->rid server (drop *remotify-length* coll))})))
 
 (extend-protocol p/HasRemote
   nil (-has-remotes? [_] false)
@@ -144,7 +182,7 @@
 
 (extend-protocol p/Remotify
   Object
-  (-remotify [obj server] (map->Ref {:id (cache-remote-ref server obj)}))
+  (-remotify [obj server] (map->Ref {:id (object->rid server obj)}))
 
   clojure.lang.IMapEntry
   (-remotify
@@ -159,7 +197,7 @@
     [obj server]
     (if (instance? clojure.lang.IPersistentCollection obj)
       (remotify-map server obj)
-      (map->Ref {:id (cache-remote-ref server obj)})))
+      (map->Ref {:id (object->rid server obj)})))
 
   clojure.lang.PersistentHashSet
   (-remotify [coll server] (remotify-set server coll))
