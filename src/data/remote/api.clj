@@ -1,6 +1,9 @@
 (ns data.remote.api
-  (:require [data.remote.impl.protocols :as p]
-            [data.remote.server :as server])
+  (:require
+    [data.replicator.server.impl.protocols :as p]
+    [data.replicator.server.spi :as server])
+  (:import
+    [data.replicator.server.spi Ref])
   (:refer-clojure :exclude [seq]))
 
 (set! *warn-on-reflection* true)
@@ -20,7 +23,7 @@
   (-fetch [rid cache]))
 
 (extend-protocol Fetch
-  data.remote.server.Ref
+  Ref
   (-fetch [rid cache]
     (let [ret (.get ^java.util.concurrent.ConcurrentHashMap cache (:id rid))]
       (when ret rid)))

@@ -1,4 +1,4 @@
-(ns data.remote.impl.protocols)
+(ns data.replicator.server.impl.protocols)
 
 (defprotocol HasRemote
   (-has-remotes? [x] "Returns true if the -remotify of x will contain any remote refs."))
@@ -9,5 +9,3 @@
 (defprotocol Server
   (-object->rid [server obj] "Ensure obj in cache, returns rid.")
   (-rid->object [server key] "Given rid, return obj or nil."))
-
-
