@@ -1,11 +1,13 @@
 (import [com.google.common.cache CacheBuilder RemovalListener Cache])
 
-(require :reload '[data.remote.server :as server])
+(require :reload
+  '[data.replicator.server.impl.cache :as cache]
+  '[data.replicator.server.spi :as server])
 
 (def builder (-> (CacheBuilder/newBuilder)
                  (.maximumSize 3)))
 (def cache
-  (server/create-remote-cache builder))
+  (cache/create-remote-cache builder))
 
 (.asMap (.rid->obj cache))
 (.identity->rid cache)

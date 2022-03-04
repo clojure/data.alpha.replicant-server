@@ -1,5 +1,6 @@
 (require :reload
-         '[data.remote.server :as server])
+         '[data.replicator.server.impl.cache :as cache]
+         '[data.replicator.server.spi :as server])
 
 (set! *print-length* (* server/*remotify-length* 2))
 
@@ -28,7 +29,7 @@
 
 (def cache-builder (-> (com.google.common.cache.CacheBuilder/newBuilder)
                        (.maximumSize 100000)))
-(def server (server/create-remote-cache cache-builder))
+(def server (cache/create-remote-cache cache-builder))
 
 (doseq [obj objects]
   (prn obj)
