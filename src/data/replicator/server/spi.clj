@@ -175,3 +175,7 @@
   Symbol (-remotify [x _] x)
   Number (-remotify [x _] x)
   nil (-remotify [x _] nil))
+
+(defn register
+  [server obj]
+  (map->Ref {:id (object->rid server obj)}))
