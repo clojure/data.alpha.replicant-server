@@ -2,3 +2,4 @@
 .idea/
 .nrepl*
 *.iml
+.clj-kondo/
