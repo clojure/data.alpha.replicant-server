@@ -37,8 +37,9 @@
 (defrecord RMapEntry [kv])
 
 (defmethod print-method Ref [rref ^Writer w]
-  (.write w (str "#r"))
-  (@#'clojure.core/print-map rref @#'clojure.core/pr-on w))
+  (.write w (str "#r/id "))
+  (let [{:keys [id]} rref]
+    (@#'clojure.core/print id)))
 
 (defmethod print-method RVec [rref ^Writer w]
   (.write w (str "#r/vec"))
