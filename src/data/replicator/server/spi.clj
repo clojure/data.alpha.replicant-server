@@ -14,8 +14,8 @@
   (p/-object->rid server obj))
 
 (defn rid->object
-  [server obj]
-  (p/-rid->object server obj))
+  [server rid]
+  (p/-rid->object server rid))
 
 (defn has-remotes?
   "Returns true if remotify of obj would include remote object references."
