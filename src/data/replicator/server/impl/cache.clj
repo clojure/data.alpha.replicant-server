@@ -3,6 +3,7 @@
     [data.replicator.server.impl.protocols :as p])
   (:import
     [com.google.common.cache CacheBuilder RemovalListener Cache]
+    [java.util UUID]
     [java.util.function Function]
     [java.util.concurrent ConcurrentMap ConcurrentHashMap]))
 
@@ -10,13 +11,13 @@
 
 (defn- ju-function
   "Wrap Clojure function as j.u.Function."
-  [f]
+  ^Function [f]
   (reify Function
     (apply [_ x] (f x))))
 
 (defn- gc-removed-value-listener
   "Return a guava removal listener that calls f on the removed value."
-  [f]
+  ^RemovalListener [f]
   (reify RemovalListener
     (onRemoval [_ note] (f (.getValue note)))))
 
@@ -30,7 +31,7 @@
     (.computeIfAbsent
       identity->rid
       (System/identityHashCode obj)
-      (-> (fn [_] (let [rid (java.util.UUID/randomUUID)]
+      (-> (fn [_] (let [rid (UUID/randomUUID)]
                     (.put rid->obj rid obj)
                     rid))
         ju-function)))
