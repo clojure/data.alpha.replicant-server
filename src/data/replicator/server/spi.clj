@@ -3,7 +3,7 @@
     [data.replicator.server.impl.protocols :as p])
   (:import
     [java.io Writer]
-    [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection IMapEntry
+    [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
                   PersistentHashSet PersistentTreeSet PersistentVector]))
 
 (def ^:dynamic *remotify-length* 25)
@@ -26,7 +26,9 @@
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
-  (p/-remotify obj server))
+  (let [ret (p/-remotify obj server)]
+    ;;(println "remotify" (class obj) "=>" (class ret))
+    ret))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
 (defrecord Ref [id])
@@ -42,32 +44,33 @@
     (@#'clojure.core/print id)))
 
 (defmethod print-method RVec [rref ^Writer w]
-  (.write w (str "#r/vec"))
+  (.write w (str "#r/vec "))
   (let [{:keys [id count]} rref]
-    (@#'clojure.core/print-map {:r/id id :count count} @#'clojure.core/pr-on w)))
+    (@#'clojure.core/print-map {:id id :count count} @#'clojure.core/pr-on w)))
 
 (defmethod print-method RSet [rref ^Writer w]
-  (.write w (str "#r/set"))
+  (.write w (str "#r/set "))
   (let [{:keys [id count]} rref]
-    (@#'clojure.core/print-map {:r/id id :count count} @#'clojure.core/pr-on w)))
+    (@#'clojure.core/print-map {:id id :count count} @#'clojure.core/pr-on w)))
 
 (defmethod print-method RMap [rref ^Writer w]
-  (.write w (str "#r/map"))
+  (.write w (str "#r/map "))
   (let [{:keys [id count]} rref]
-    (@#'clojure.core/print-map {:r/id id :count count} @#'clojure.core/pr-on w)))
+    (@#'clojure.core/print-map {:id id :count count} @#'clojure.core/pr-on w)))
 
 (defmethod print-method RMapEntry [rref ^Writer w]
-  (.write w (str "#r/kv"))
+  (.write w (str "#r/kv "))
   (.write w (str (:kv rref))))
 
 (defmethod print-method RSeq [rref ^Writer w]
-  (.write w (str "#r/seq"))
+  (.write w (str "#r/seq "))
   (let [{:keys [head rest]} rref]
-    (@#'clojure.core/print-map {:head head :r/id rest} @#'clojure.core/pr-on w)))
+    (@#'clojure.core/print-map {:head head :rest rest} @#'clojure.core/pr-on w)))
 
 (defn remotify-head
   "Remotify the first *remotify-length* items in the head of coll"
   [server coll]
+  ;;(println "remotify-head")
   (loop [coll coll
          result (transient [])
          n *remotify-length*]
@@ -84,7 +87,7 @@
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into #{} (remotify-head server coll)) {:r/id (object->rid server coll)})
+      (with-meta (into #{} (remotify-head server coll)) {:id (object->rid server coll)})
       coll)
     (map->RSet {:id (object->rid server coll)
                 :count (count coll)})))
@@ -95,7 +98,7 @@
     (if (has-remotes? coll)
       (with-meta (apply hash-map (interleave (remotify-head server (keys coll))
                                    (remotify-head server (vals coll))))
-        {:r/id (object->rid server coll)})
+        {:id (object->rid server coll)})
       coll)
     (map->RMap {:id (object->rid server coll)
                 :count (count coll)})))
@@ -104,7 +107,7 @@
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into [] (remotify-head server coll)) {:r/id (object->rid server coll)})
+      (with-meta (into [] (remotify-head server coll)) {:id (object->rid server coll)})
       coll)
     (map->RVec {:id (object->rid server coll)
                 :count (count coll)})))
@@ -113,7 +116,7 @@
   [server coll]
   (if (<= (bounded-count *remotify-length* coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (remotify-head server coll) {:r/id (object->rid server coll)})
+      (with-meta (remotify-head server coll) {:id (object->rid server coll)})
       coll)
     (map->RSeq {:head (take *remotify-length* coll)
                 :rest (object->rid server (drop *remotify-length* coll))})))
@@ -143,7 +146,7 @@
   Object
   (-remotify [obj server] (map->Ref {:id (object->rid server obj)}))
 
-  IMapEntry
+  MapEntry
   (-remotify
     [obj server]
     (let [[k v] obj

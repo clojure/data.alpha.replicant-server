@@ -3,116 +3,131 @@
     [data.replicator.client.spi :as spi]
     [data.replicator.client.impl.protocols :as p])
   (:import
-    [clojure.lang IDeref Seqable Associative]))
+    [java.io Writer]
+    [clojure.lang IDeref Seqable Associative ILookup Sequential Indexed Counted
+                  IMeta IPersistentCollection IPersistentStack IPersistentMap IPersistentSet]))
 
 (set! *warn-on-reflection* true)
 
+(deftype Relay [rid remote]
+  IDeref
+  (deref [this] (spi/remote-fetch remote this))
+
+  p/IRelay
+  (relay-seq [this]
+    (spi/remote-seq remote this))
+  (relay-entry [this k]
+    (spi/remote-entry remote this k)))
+
+(defmethod print-method Relay [^Relay relay ^Writer w]
+  (.write w (str "#l/id "))
+  (@#'print (.-rid relay)))
+
 (defn relay
   [rid remote]
-  (reify
-    IDeref
-    (deref [_] (spi/remote-fetch remote rid))
+  (->Relay rid remote))
 
-    p/IRelay
-    (relay-seq [_]
-      (spi/remote-seq remote rid))
-    (relay-entry [_ k]
-      (spi/remote-entry remote rid k))))
+;(defn remote-seq
+;  [head rest-relay]
+;  (concat head (reify Seqable
+;                 (seq [_]
+;                   (p/relay-seq rest-relay)))))
 
-(defn remote-seq
-  [head rest-relay]
-  (concat head (reify Seqable
-                 (seq [_]
-                   (p/relay-seq rest-relay)))))
+(deftype RemoteVector
+  [relay count metadata]
+  Associative
+  (containsKey [this k] (boolean (.entryAt this k)))
+  (entryAt [this k] (p/relay-entry relay k))
+
+  Seqable
+  (seq [this] (p/relay-seq relay))
+
+  IPersistentCollection
+  (count [this] count)
+  (empty [this] [])
+
+  ILookup
+  (valAt [this k] (val (.entryAt this k)))
+
+  Sequential
+
+  IPersistentStack
+  (peek [this]
+    (when (pos? count) (.valAt this (dec count))))
+
+  Indexed
+  (nth [this n] (.valAt this n))
+
+  Counted
+
+  IMeta
+  (meta [this] metadata)
+
+  ;;IFn
+  ;;Iterable
+  )
+
+;(defmethod print-method RemoteVector [^RemoteVector v ^Writer w]
+;  (.write w (str "#l/id "))
+;  (@#'print (.-rid relay)))
 
 (defn remote-vector
   [relay count metadata]
-  (with-meta
-    (reify
-      clojure.lang.Associative
-      (containsKey [this k] (boolean (.entryAt this k)))
-      (entryAt [this k] (p/relay-entry relay k))
+  (->RemoteVector relay count (assoc metadata :id relay)))
 
-      clojure.lang.Seqable
-      (seq [this] (p/relay-seq relay))
+(deftype RemoteMap
+  [relay count metadata]
+  Associative
+  (containsKey [this k] (boolean (.entryAt this k)))
+  (entryAt [this k] (p/relay-entry relay k))
 
-      clojure.lang.IPersistentCollection
-      (count [this] count)
-      (empty [this] [])
+  Seqable
+  (seq [this] (p/relay-seq relay))
 
-      clojure.lang.ILookup
-      (valAt [this k] (val (.entryAt this k)))
+  IPersistentCollection
+  (count [this] count)
+  (empty [this] {})
 
-      clojure.lang.Sequential
+  ILookup
+  (valAt [this k] (val (.entryAt this k)))
 
-      clojure.lang.IPersistentStack
-      (peek [this]
-        (when (pos? count) (.valAt this (dec count))))
+  Counted
 
-      clojure.lang.Indexed
-      (nth [this n] (.valAt this n))
+  IPersistentMap
 
-      clojure.lang.Counted
+  IMeta
+  (meta [this] metadata)
 
-      ;clojure.lang.IMeta
-      ;(meta [this] m)
-
-      ;;clojure.lang.IFn
-      ;;java.util.Iterable
-      )
-    (assoc metadata :id relay)))
+  ;;IFn
+  ;;Iterable
+  )
 
 (defn remote-map
   [relay count metadata]
-  (with-meta
-    (reify
-      clojure.lang.Associative
-      (containsKey [this k] (boolean (.entryAt this k)))
-      (entryAt [this k] (p/relay-entry relay k))
+  (->RemoteMap relay count (assoc metadata :id relay)))
 
-      clojure.lang.Seqable
-      (seq [this] (p/relay-seq relay))
+(deftype RemoteSet
+  [relay count metadata]
+  clojure.lang.Seqable
+  (seq [this] (p/relay-seq relay))
 
-      clojure.lang.IPersistentCollection
-      (count [this] count)
-      (empty [this] {})
+  IPersistentCollection
+  (count [this] count)
+  (empty [this] #{})
 
-      clojure.lang.ILookup
-      (valAt [this k] (val (.entryAt this k)))
+  Counted
 
-      clojure.lang.Counted
+  IPersistentSet
+  (contains [this k] (boolean (p/relay-entry relay k)))
+  (get [this k] (val (p/relay-entry relay k)))
 
-      clojure.lang.IPersistentMap
+  IMeta
+  (meta [this] metadata)
 
-      ;clojure.lang.IMeta
-      ;(meta [this] m)
-
-      ;;clojure.lang.IFn
-      ;;java.util.Iterable
-      )
-    (assoc metadata :id relay)))
+  ;;IFn
+  ;;Iterable
+  )
 
 (defn remote-set
   [relay count metadata]
-  (with-meta
-    (reify
-      clojure.lang.Seqable
-      (seq [this] (p/relay-seq relay))
-
-      clojure.lang.IPersistentCollection
-      (count [this] count)
-      (empty [this] #{})
-
-      clojure.lang.Counted
-
-      clojure.lang.IPersistentSet
-      (contains [this k] (boolean (p/relay-entry relay k)))
-      (get [this k] (val (p/relay-entry relay k)))
-
-      ;clojure.lang.IMeta
-      ;(meta [this] m)
-
-      ;;clojure.lang.IFn
-      ;;java.util.Iterable
-      )
-    (assoc metadata :id relay)))
+  (->RemoteSet relay count (assoc metadata :id relay)))
