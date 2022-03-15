@@ -29,12 +29,12 @@
 
 (def cache-builder (-> (com.google.common.cache.CacheBuilder/newBuilder)
                        (.maximumSize 100000)))
-(def server (cache/create-remote-cache cache-builder))
+(def cache (cache/create-remote-cache cache-builder))
 
 (doseq [obj objects]
   (prn obj)
   (print "=> " )
-  (prn (server/remotify obj server))
+  (prn (server/remotify obj cache))
   (prn))
 
 

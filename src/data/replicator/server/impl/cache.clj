@@ -25,7 +25,7 @@
 (deftype RemoteCache
   [^ConcurrentMap identity->rid
    ^Cache rid->obj]
-  p/Server
+  p/Cache
   (-object->rid
     [_ obj]
     (.computeIfAbsent
@@ -40,7 +40,7 @@
     (.getIfPresent rid->obj k)))
 
 (defn create-remote-cache
-  "Given a guava cache builder, return a p/Server that uses uuids for remote ids."
+  "Given a guava cache builder, return a p/Cache that uses uuids for remote ids."
   [^CacheBuilder builder]
   (let [identity->rid (ConcurrentHashMap.)
         rid->obj (.. builder
