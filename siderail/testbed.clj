@@ -4,7 +4,9 @@
     [data.replicator.client.spi :as client.spi]
     [data.replicator.server.reader :as server.reader]
     [data.replicator.server.impl.cache :as cache]
-    [data.replicator.server.spi :as server.spi]))
+    [data.replicator.server.spi :as server.spi])
+  (:import
+    [clojure.lang MapEntry IPersistentMap]))
 
 (def ^:dynamic *log* true)
 
@@ -49,7 +51,7 @@
                    (over-wire (fn [robj] (server.spi/remotify (seq robj) cache)) rid))
                  (remote-entry [_ rid k]
                    (when *log* (println "\nrentry" rid k))
-                   (over-wire (fn [robj k] (server.spi/remotify (find robj k) cache)) rid k)))]
+                   (over-wire (fn [robj k] (server.spi/remotify (MapEntry/create k (get robj k)) cache)) rid k)))]
     ;; install server readers
     (alter-var-root #'server.reader/*server* (constantly cache))
     (server.reader/install-readers)
@@ -64,22 +66,25 @@
 (comment
   (def server (setup))
   (def o (vec (range 55)))
-  (def vref (server.spi/register server o))
-  (def vid (wire-fn vref))
+  (def vid (wire-fn (server.spi/register server o)))
   (def v @vid)
   v
-  (class v)
   (seq v)
   (into [] v)
   (->> v (map inc) (reduce +))
   (nth v 54)
-  (vals v)
 
-  (def sref (server.spi/register server (set (range 30))))
-  (def sid (wire-fn sref))
+  (def sid (wire-fn (server.spi/register server (set (range 30)))))
   (def s @sid)
   s
   (contains? s 29)
 
-  (server.spi/rid->object server (.-rid ^data.replicator.client.impl.rds.Relay vid))
+  (def mid (wire-fn (server.spi/register server (zipmap (range 30) (range 30)))))
+  (def m @mid)
+  (contains? m 0)
+  (get m 0)
+  (into [] (keys m)) ;; needs iterator
+  (reduce conj [] (map identity (keys m)))
+
+  ;;(server.spi/rid->object server (.-rid ^data.replicator.client.impl.rds.Relay vid))
   )
