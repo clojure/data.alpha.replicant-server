@@ -1,8 +1,9 @@
 (ns data.replicator.client.reader
   (:require
+    [data.replicator.client.impl.protocols :as p]
     [data.replicator.client.impl.rds :as rds])
   (:import
-    [clojure.lang MapEntry]))
+    [clojure.lang MapEntry Seqable]))
 
 (def ^:dynamic *remote-client* nil)
 
@@ -14,7 +15,9 @@
 (defn seq-reader
   "Read '#r/seq {:head [h e a d] :rest rid} and return a seq"
   [{:keys [head rest] :as m}]
-  (rds/remote-seq head (rid-reader rest)))
+  (concat head
+    (reify Seqable
+      (seq [_] (p/relay-seq (rid-reader rest))))))
 
 (defn kv-reader
   "Read '#r/kv [k v] and return a map entry"
