@@ -27,11 +27,12 @@
   [rid remote]
   (->Relay rid remote))
 
-;(defn remote-seq
-;  [head rest-relay]
-;  (concat head (reify Seqable
-;                 (seq [_]
-;                   (p/relay-seq rest-relay)))))
+(defn remote-seq
+  "Read '#r/seq {:head [h e a d] :rest rid} and return a seq"
+  [head rest-relay]
+  (concat head
+    (reify Seqable
+      (seq [_] (p/relay-seq rest-relay)))))
 
 (deftype RemoteVector
   [relay count metadata]

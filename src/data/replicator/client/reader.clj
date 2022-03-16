@@ -15,9 +15,7 @@
 (defn seq-reader
   "Read '#r/seq {:head [h e a d] :rest rid} and return a seq"
   [{:keys [head rest] :as m}]
-  (concat head
-    (reify Seqable
-      (seq [_] (p/relay-seq (rid-reader rest))))))
+  (rds/remote-seq head (rid-reader rest)))
 
 (defn kv-reader
   "Read '#r/kv [k v] and return a map entry"
