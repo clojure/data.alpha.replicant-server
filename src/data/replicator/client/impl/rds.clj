@@ -4,8 +4,9 @@
     [data.replicator.client.impl.protocols :as p])
   (:import
     [java.io Writer]
-    [clojure.lang IDeref Seqable Associative ILookup Sequential Indexed Counted
-                  IMeta IPersistentCollection IPersistentStack IPersistentMap IPersistentSet]))
+    [clojure.lang IDeref Seqable Associative ILookup Sequential Indexed Counted IFn
+                  IMeta IPersistentCollection IPersistentStack IPersistentMap IPersistentSet
+                  ArityException]))
 
 (set! *warn-on-reflection* true)
 
@@ -64,7 +65,19 @@
   IMeta
   (meta [this] metadata)
 
-  ;;IFn
+  IFn
+  (invoke [this k]
+    (.valAt this k))
+  (invoke [this k not-found]
+    (if-let [e (.entryAt this k)]
+      (val e)
+      not-found))
+  (applyTo [this args]
+    (condp = (count args)
+      1 (.invoke this (nth args 0))
+      2 (.invoke this (nth args 0) (nth args 1))
+      (throw (ArityException. (count args) "RemoteVector"))))
+
   ;;Iterable
   )
 

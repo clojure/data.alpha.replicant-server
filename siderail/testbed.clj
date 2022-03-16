@@ -28,7 +28,7 @@
           _ (when *log*
               (println "  ---")
               (println "  wire-ret in " (class wire-ret))
-              (println "  wire value" (pr-str wire-ret)))
+              (println "  wire value  " (pr-str wire-ret)))
           wire-out (wire-fn wire-ret)]
       (when *log* (println "  wire-ret out" (class wire-out)))
       wire-out)))
@@ -51,7 +51,13 @@
                    (over-wire (fn [robj] (server.spi/remotify (seq robj) cache)) rid))
                  (remote-entry [_ rid k]
                    (when *log* (println "\nrentry" rid k))
-                   (over-wire (fn [robj k] (server.spi/remotify (MapEntry/create k (get robj k)) cache)) rid k)))]
+                   (over-wire
+                     (fn [robj k]
+                       (server.spi/remotify
+                         (when (contains? robj k)
+                           (MapEntry/create k (get robj k)))
+                         cache))
+                     rid k)))]
     ;; install server readers
     (alter-var-root #'server.reader/*server* (constantly cache))
     (server.reader/install-readers)
@@ -73,6 +79,9 @@
   (into [] v)
   (->> v (map inc) (reduce +))
   (nth v 54)
+  (v 54)
+  (v 90 -1)
+  (apply v [54]) ;; TODO: this doesn't work for some probably obvious reason that's not obvious to me
 
   (def sid (wire-fn (server.spi/register server (set (range 30)))))
   (def s @sid)
