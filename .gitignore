@@ -3,3 +3,5 @@
 .nrepl*
 *.iml
 .clj-kondo/
+.calva/
+.lsp/
