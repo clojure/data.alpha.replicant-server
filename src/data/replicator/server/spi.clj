@@ -71,17 +71,7 @@
   "Remotify the first *remotify-length* items in the head of coll"
   [server coll]
   ;;(println "remotify-head")
-  (loop [coll coll
-         result (transient [])
-         n *remotify-length*]
-    (if (or (nil? coll) (zero? n))
-      (persistent! result)
-      (let [[item & more] coll
-            d (remotify item server)]
-        (recur
-          more
-          (conj! result d)
-          (dec n))))))
+  (into [] (comp (take *remotify-length*) (map #(remotify % server))) coll))
 
 (defn remotify-set
   [server coll]
@@ -118,7 +108,7 @@
     (if (has-remotes? coll)
       (with-meta (remotify-head server coll) {:id (object->rid server coll)})
       coll)
-    (map->RSeq {:head (take *remotify-length* coll)
+    (map->RSeq {:head (remotify-head server coll)
                 :rest (object->rid server (drop *remotify-length* coll))})))
 
 (extend-protocol p/HasRemote
