@@ -1,5 +1,15 @@
 {:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.12.0-alpha1"}
-        com.cognitect/anomalies {:mvn/version "0.1.12"}
-        com.google.guava/guava {:mvn/version "31.0.1-jre"}
-        org.clojure/core.async {:mvn/version "1.3.610"}}}
+ :deps
+ {org.clojure/clojure {:mvn/version "1.12.0-alpha1"}
+  com.cognitect/anomalies {:mvn/version "0.1.12"}
+  com.google.guava/guava {:mvn/version "31.0.1-jre"}
+  org.clojure/core.async {:mvn/version "1.3.610"}}
+
+ :aliases
+ {;; clj -X:s
+  :s {:extra-paths ["siderail"] :exec-fn morse-server/start}
+
+  ;; clj -X:c
+  :c {:extra-paths ["siderail"] :exec-fn morse-client/start}
+ } 
+ }
