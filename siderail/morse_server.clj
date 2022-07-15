@@ -19,7 +19,7 @@
 ;; called with *in* and *out* bound to a client
 (defn morse-conn
   [{:keys [rds-cache inspect-queue]}]
-  (.println System/out (str "CONNECT: " rds-cache inspect-queue))
+  (.println System/out (str "CONNECT"))
   (let [out *out*]
     ;; Thread to read inspect events and push to client
     (.start (Thread.
@@ -39,7 +39,7 @@
     (loop []
       (try
         (let [o (read *in*)
-              _ (.println System/out (str "READ: " o))
+              _ (.println System/out (str "READ" (:op o)))
               {:keys [op rid txn] :as r} o]
           (case op
             :fetch (prn {:tag :rds :txn txn :val (server.spi/remotify rid rds-cache)})
