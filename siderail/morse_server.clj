@@ -18,7 +18,7 @@
 
 ;; called with *in* and *out* bound to a client
 (defn morse-conn
-  [{:keys [rds-cache inspect-queue]}]
+  [{:keys [rds-cache inspect-queue out-fn]}]
   (.println System/out (str "CONNECT"))
   (let [out *out*]
     ;; Thread to read inspect events and push to client
@@ -29,8 +29,8 @@
                 (loop []
                   (let [obj (.take ^BlockingQueue inspect-queue)]  ;; .poll with timeout later
                     (when obj
-                      (prn {:tag :inspect
-                            :val (server.spi/remotify obj rds-cache)}))
+                      (out-fn {:tag :inspect
+                               :val (server.spi/remotify obj rds-cache)}))
                     (recur)))))))
   ;; Request/response loop
   (binding [*read-eval* false
@@ -42,14 +42,15 @@
               _ (.println System/out (str "READ" (:op o)))
               {:keys [op rid txn] :as r} o]
           (case op
-            :fetch (prn {:tag :rds :txn txn :val (server.spi/remotify rid rds-cache)})
-            :seq (prn {:tag :rds :txn txn :val (server.spi/remotify (seq rid) rds-cache)})
-            :entry (let [k (:k r)] (prn {:tag :rds :txn txn
-                                         :val (when (contains? rid k)
-                                                (server.spi/remotify
-                                                 (MapEntry/create k (get rid k))
-                                                 rds-cache))}))
-            :eval (prn {:tag :ret :val (eval (:form r))})))
+            :fetch (out-fn {:tag :rds :txn txn :val (server.spi/remotify rid rds-cache)})
+            :seq (out-fn {:tag :rds :txn txn :val (server.spi/remotify (seq rid) rds-cache)})
+            :entry (let [k (:k r)] (out-fn {:tag :rds
+                                            :txn txn
+                                            :val (when (contains? rid k)
+                                                   (server.spi/remotify
+                                                    (MapEntry/create k (get rid k))
+                                                    rds-cache))}))
+            :eval (out-fn {:tag :ret :val (eval (:form r))})))
         (catch Throwable _
           ;; TODO
           ))
@@ -59,8 +60,13 @@
   [& {:keys [port] :or {port 5555}}]
   (let [rds-cache (setup-rds)
         inspect-queue (ArrayBlockingQueue. 1024)
+        out-lock (Object.)
+        out-fn (fn [val]
+                 (locking out-lock
+                   (prn val)))
         config {:rds-cache rds-cache
-                :inspect-queue inspect-queue}
+                :inspect-queue inspect-queue
+                :out-fn out-fn}
         server (server/start-server {:port port,
                                      :name "morse",
                                      :accept `morse-conn,
