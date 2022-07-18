@@ -1,7 +1,5 @@
 (ns irepl
-  (:require [morse-server :as server])
-  (:import  [java.net ServerSocket]
-            [java.util.concurrent BlockingQueue]))
+  (:require [morse-server :as server]))
 
 (def morse-server nil)
 
