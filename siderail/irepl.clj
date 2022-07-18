@@ -1,7 +1,13 @@
-(ns irepl)
+(ns irepl
+  (:require [morse-server :as server])
+  (:import  [java.net ServerSocket]
+            [java.util.concurrent BlockingQueue]))
+
+(def morse-server nil)
 
 (defn inspect [val]
-  (println "adding inspect message " {:op :inspect :val val})
+  (and morse-server
+       (server/inspect morse-server val))
   val)
 
 (defn- irepl-eval [form]
@@ -10,9 +16,19 @@
    `(let [~'inspect ~inspect]
       ~form)))
 
-(defn irepl []
-  (clojure.main/repl
-   :init   clojure.core.server/repl-init
-   :prompt #(print "i> ")
-   :read   clojure.core.server/repl-read
-   :eval   irepl-eval))
+(defn irepl [& {:keys [auto-inspect?]}]
+  (with-redefs [morse-server (server/morse-server)]
+    (let [post-phase (if auto-inspect? inspect identity)]
+      (clojure.main/repl
+       :init   clojure.core.server/repl-init
+       :prompt #(print "i> ")
+       :read   clojure.core.server/repl-read
+       :eval   (comp post-phase irepl-eval)))
+
+    (and morse-server
+         (.close ^ServerSocket (:server morse-server)))))
+
+(comment
+  (irepl)
+  (irepl :auto-inspect? true)
+)
