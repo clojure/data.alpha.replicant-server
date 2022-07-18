@@ -1,5 +1,6 @@
 (ns irepl
-  (:require [morse-server :as server]))
+  (:require [morse-server :as server])
+  (:import [java.net ServerSocket]))
 
 (def morse-server nil)
 
@@ -17,14 +18,15 @@
 (defn irepl [& {:keys [auto-inspect?]}]
   (with-redefs [morse-server (server/morse-server)]
     (let [post-phase (if auto-inspect? inspect identity)]
-      (clojure.main/repl
-       :init   clojure.core.server/repl-init
-       :prompt #(print "i> ")
-       :read   clojure.core.server/repl-read
-       :eval   (comp post-phase irepl-eval)))
-
-    (and morse-server
-         (.close ^ServerSocket (:server morse-server)))))
+      (try
+        (clojure.main/repl
+         :init   clojure.core.server/repl-init
+         :prompt #(print "i> ")
+         :read   clojure.core.server/repl-read
+         :eval   (comp post-phase irepl-eval))
+        (finally
+          (and morse-server
+               (.close ^ServerSocket (:server morse-server))))))))
 
 (comment
   (irepl)

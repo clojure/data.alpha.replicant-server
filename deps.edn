@@ -11,5 +11,8 @@
 
   ;; clj -X:c
   :c {:extra-paths ["siderail"] :exec-fn morse-client/start}
+
+  ;; clj -X:r
+  :r {:extra-paths ["siderail"] :exec-fn irepl/irepl}
  } 
  }
