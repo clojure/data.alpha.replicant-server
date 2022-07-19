@@ -1,4 +1,4 @@
-(ns morse-server
+(ns data.replicator.server.api
   (:require
    [data.replicator.server.spi :as server.spi]
    [data.replicator.server.reader :as server.reader]

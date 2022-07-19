@@ -1,4 +1,4 @@
-(ns morse-client
+(ns data.replicator.client.api
   (:require
    [data.replicator.client.reader :as client.reader]
    [data.replicator.client.spi :as client.spi])
@@ -21,7 +21,7 @@
         p (promise)
         req (assoc msg :txn txn)]
     (.println System/out (str "WRITE: " (pr-str req)))
-    (swap! pending-reqs assoc txn #(deliver p %2))
+    (dosync (alter pending-reqs assoc txn #(deliver p %2)))
     (out-fn req)
     @p))
 
@@ -37,7 +37,7 @@
                      (.write wr (pr-str val))
                      (.flush wr))))
         EOF (Object.)
-        pending-reqs (atom {})
+        pending-reqs (ref {})
         callback-agent (agent nil)
         rds-client (reify client.spi/IRemote
                      (remote-fetch [_ rid]
@@ -65,11 +65,12 @@
                       (case tag
                         :inspect (event-fn val) ;; TODO - submit event
                         :tap (event-fn val) ;; TODO - submit event
-                        :rds (swap! pending-reqs
-                                    (fn [pr]
-                                      (let [cb (get pr txn)]
-                                        (when cb (send callback-agent cb val))
-                                        (dissoc pr txn)))))
+                        :rds (dosync
+                              (alter pending-reqs
+                                     (fn [pr]
+                                       (let [cb (get pr txn)]
+                                         (when cb (send callback-agent cb val))
+                                         (dissoc pr txn))))))
                       (recur))))
                 (finally
                   (.close wr)))))))

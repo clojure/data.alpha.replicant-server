@@ -1,5 +1,5 @@
 (ns irepl
-  (:require [morse-server :as server])
+  (:require [data.replicator.server.api :as server])
   (:import [java.net ServerSocket]))
 
 (def morse-server nil)

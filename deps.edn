@@ -7,10 +7,10 @@
 
  :aliases
  {;; clj -X:s
-  :s {:extra-paths ["siderail"] :exec-fn morse-server/start}
+  :s {:exec-fn data.replicator.server.api/start}
 
   ;; clj -X:c
-  :c {:extra-paths ["siderail"] :exec-fn morse-client/start}
+  :c {:exec-fn data.replicator.client.api/start}
 
   ;; clj -X:r
   :r {:extra-paths ["siderail"] :exec-fn irepl/irepl}
