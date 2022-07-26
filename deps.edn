@@ -13,6 +13,6 @@
   :c {:exec-fn data.replicator.client.api/start}
 
   ;; clj -X:r
-  :r {:extra-paths ["siderail"] :exec-fn irepl/irepl}
+  :r {:extra-paths ["siderail"] :exec-fn replicant/start-transmitter}
  } 
  }
