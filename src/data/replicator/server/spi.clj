@@ -167,7 +167,14 @@
   Keyword (-remotify [x _] x)
   Symbol (-remotify [x _] x)
   Number (-remotify [x _] x)
-  nil (-remotify [x _] nil))
+  nil (-remotify [x _] nil)
+
+  Ref (-remotify [x _] x)
+  RVec (-remotify [x _] x)
+  RSet (-remotify [x _] x)
+  RMap (-remotify [x _] x)
+  RSeq (-remotify [x _] x)
+  RMapEntry (-remotify [x _] x))
 
 (defn register
   [server obj]
