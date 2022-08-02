@@ -16,7 +16,9 @@
     (server.reader/install-readers)
     cache))
 
+;; TODO this needs refactoring
 (def ^:dynamic *rds-server* (setup-rds))
+
 
 (defn remotify-proc [val]
   (-> val
@@ -36,17 +38,11 @@
                             :exception true)))
                  m)))))))
 
-(defn rid-hydrator [rid]
-  (let [val (#'server.reader/lid-reader rid)]
-    `(quote ~(if (instance? clojure.lang.IObj val)
-               (with-meta val {:r/id rid})
-               val))))
-
 (defn rds-prepl
   "RDS prepl, uses *in* and *out* streams to serve RDS data to a remote repl."
   {:added "1.10"}
   [& {:keys []}]
-  (binding [*data-readers* (assoc *data-readers* 'r/id rid-hydrator)
+  (binding [*data-readers* (assoc *data-readers* 'r/id server.reader/lid-reader)
             
             server.reader/*server* *rds-server*]
     (server/prepl *in* (outfn-proc *out*))))
@@ -68,7 +64,7 @@
 
 (defn fetch
   ([v] v)
-  ([v {:keys [length level] :as depth-opts}]
+  ([v {:keys [rds/length rds/depth] :as depth-opts}]
    (if (counted? v)
      (if (and length (> (count v) length)) ;; depth needed in spi
        (binding [server.spi/*remotify-length* length]
@@ -77,27 +73,39 @@
              (assoc rds :id (-> rds meta :r/id))
              rds)))
        v)
-     v))
-  )
+     v)))
 
 (defn seq
-  ([v] (seq v))
-  ([v {:keys [length level] :as depth-opts}])
-  )
+  ([v] (clojure.core/seq v))
+  ([v {:keys [rds/length rds/depth] :as depth-opts}]
+   (if (counted? v)
+     (if (and length (> (count v) length)) ;; depth needed in spi
+       (binding [server.spi/*remotify-length* length]
+         (server.spi/remotify (seq v) *rds-server*))
+       (clojure.core/seq v))
+     (clojure.core/seq v))))
 
 (defn entry
-  ([v k] (get v k))
-  ([v k {:keys [length level] :as depth-opts}])
-  )
-
+  ([m k] (get m k))
+  ([m k {:keys [rds/length rds/depth] :as depth-opts}]
+   (let [v (get m k)]
+     (if (counted? v)
+       (if (and length (> (count v) length)) ;; depth needed in spi
+         (binding [server.spi/*remotify-length* length]
+           (let [rds (server.spi/remotify (seq v) *rds-server*)]
+             (if (contains? rds :id)
+               (assoc rds :id (-> rds meta :r/id))
+               rds)))
+         v)
+       v))))
 
 (comment
   (def svr (start-remote-replicant))
 
   (clojure.core.server/stop-server "rds")
 
-  (def rds (setup-rds))
-
+  (->> (range 0 100) (apply hash-map))
+    
   (.getIfPresent (.rid->obj *rds-server*) #uuid "6e5a7b9c-0876-4d7d-b7e4-023734d9d9ec")
 
   (read-string (pr-str (server.spi/remotify (range 0 50) rds)))
