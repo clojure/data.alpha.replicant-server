@@ -19,8 +19,8 @@
 ;; TODO this needs refactoring
 (def ^:dynamic *rds-server* (setup-rds))
 
-
 (defn remotify-proc [val]
+;;  (println :=====> (type val))
   (-> val
       (server.spi/remotify *rds-server*)
       pr-str))
@@ -30,7 +30,7 @@
     (fn [m]
       (binding [*out* out, *flush-on-newline* true, *print-readably* true]
         (locking lock
-          (prn (if (#{:ret :tap :browse} (:tag m))
+          (prn (if (#{:ret :tap} (:tag m))
                  (try
                    (assoc m :val (remotify-proc (:val m)))
                    (catch Throwable ex
@@ -109,4 +109,4 @@
   (.getIfPresent (.rid->obj *rds-server*) #uuid "6e5a7b9c-0876-4d7d-b7e4-023734d9d9ec")
 
   (read-string (pr-str (server.spi/remotify (range 0 50) rds)))
-  )
+)
