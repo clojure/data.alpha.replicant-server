@@ -20,7 +20,6 @@
 (def ^:dynamic *rds-server* (setup-rds))
 
 (defn remotify-proc [val]
-;;  (println :=====> (type val))
   (-> val
       (server.spi/remotify *rds-server*)
       pr-str))
@@ -29,21 +28,22 @@
   (let [lock (Object.)]
     (fn [m]
       (binding [*out* out, *flush-on-newline* true, *print-readably* true]
-        (locking lock
+        (locking lock          
           (prn (if (#{:ret :tap} (:tag m))
-                 (try
-                   (assoc m :val (remotify-proc (:val m)))
-                   (catch Throwable ex
-                     (assoc m :val (remotify-proc (Throwable->map ex))
-                            :exception true)))
+                 (let [{:keys [rds/length rds/level] :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}} (:depth-opts (meta (:val m)))]
+                   (binding [server.spi/*remotify-length* length]
+                     (try
+                       (assoc m :val (remotify-proc (:val m)))
+                       (catch Throwable ex
+                         (assoc m :val (remotify-proc (Throwable->map ex))
+                                :exception true)))))
                  m)))))))
 
 (defn rds-prepl
   "RDS prepl, uses *in* and *out* streams to serve RDS data to a remote repl."
   {:added "1.10"}
   [& {:keys []}]
-  (binding [*data-readers* (assoc *data-readers* 'r/id server.reader/lid-reader)
-            
+  (binding [*data-readers* (assoc *data-readers* 'r/id server.reader/lid-reader)          
             server.reader/*server* *rds-server*]
     (server/prepl *in* (outfn-proc *out*))))
 
@@ -62,42 +62,47 @@
                          :args   [{:valf valf-proc}]})]
      server-socket)))
 
+(defn annotate [val & {:as opts}]
+  (if (instance? clojure.lang.IObj val)
+    (with-meta val {:depth-opts opts})
+    val))
+
 (defn fetch
   ([v] v)
-  ([v {:keys [rds/length rds/depth] :as depth-opts}]
+  ([v {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}}]
    (if (counted? v)
-     (if (and length (> (count v) length)) ;; depth needed in spi
+     (if (and length (> (count v) length)) ;; level needed in spi
        (binding [server.spi/*remotify-length* length]
          (let [rds (server.spi/remotify v *rds-server*)]
            (if (contains? rds :id)
              (assoc rds :id (-> rds meta :r/id))
-             rds)))
-       v)
-     v)))
+             (annotate rds depth-opts))))
+       (annotate v depth-opts))
+     (annotate v depth-opts))))
 
 (defn seq
   ([v] (clojure.core/seq v))
-  ([v {:keys [rds/length rds/depth] :as depth-opts}]
+  ([v {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}}]
    (if (counted? v)
-     (if (and length (> (count v) length)) ;; depth needed in spi
+     (if (and length (> (count v) length)) ;; level needed in spi
        (binding [server.spi/*remotify-length* length]
-         (server.spi/remotify (seq v) *rds-server*))
-       (clojure.core/seq v))
-     (clojure.core/seq v))))
+         (annotate (server.spi/remotify (seq v) *rds-server*) depth-opts))
+       (annotate (clojure.core/seq v) depth-opts))
+     (annotate (clojure.core/seq v) depth-opts))))
 
 (defn entry
   ([m k] (get m k))
-  ([m k {:keys [rds/length rds/depth] :as depth-opts}]
+  ([m k {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}}]
    (let [v (get m k)]
      (if (counted? v)
-       (if (and length (> (count v) length)) ;; depth needed in spi
+       (if (and length (> (count v) length)) ;; level needed in spi
          (binding [server.spi/*remotify-length* length]
            (let [rds (server.spi/remotify (seq v) *rds-server*)]
              (if (contains? rds :id)
                (assoc rds :id (-> rds meta :r/id))
-               rds)))
-         v)
-       v))))
+               (annotate rds depth-opts))))
+         (annotate v depth-opts))
+       (annotate v depth-opts)))))
 
 (comment
   (def svr (start-remote-replicant))
@@ -105,6 +110,9 @@
   (clojure.core.server/stop-server "rds")
 
   (->> (range 0 100) (apply hash-map))
+
+  (binding [server.spi/*remotify-length* nil]
+    (server.spi/remotify [1 2 3] *rds-server*))
     
   (.getIfPresent (.rid->obj *rds-server*) #uuid "6e5a7b9c-0876-4d7d-b7e4-023734d9d9ec")
 
