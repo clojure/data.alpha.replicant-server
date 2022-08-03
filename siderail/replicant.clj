@@ -31,7 +31,8 @@
         (locking lock          
           (prn (if (#{:ret :tap} (:tag m))
                  (let [{:keys [rds/length rds/level] :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}} (:depth-opts (meta (:val m)))]
-                   (binding [server.spi/*remotify-length* length]
+                   (binding [server.spi/*remotify-length* length
+                             server.spi/*remotify-level* level]
                      (try
                        (assoc m :val (remotify-proc (:val m)))
                        (catch Throwable ex
@@ -72,7 +73,8 @@
   ([v {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}}]
    (if (counted? v)
      (if (and length (> (count v) length)) ;; level needed in spi
-       (binding [server.spi/*remotify-length* length]
+       (binding [server.spi/*remotify-length* length
+                 server.spi/*remotify-level* level]
          (let [rds (server.spi/remotify v *rds-server*)]
            (if (contains? rds :id)
              (assoc rds :id (-> rds meta :r/id))
@@ -85,7 +87,8 @@
   ([v {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}}]
    (if (counted? v)
      (if (and length (> (count v) length)) ;; level needed in spi
-       (binding [server.spi/*remotify-length* length]
+       (binding [server.spi/*remotify-length* length
+                 server.spi/*remotify-level* level]
          (annotate (server.spi/remotify (seq v) *rds-server*) depth-opts))
        (annotate (clojure.core/seq v) depth-opts))
      (annotate (clojure.core/seq v) depth-opts))))
@@ -96,7 +99,8 @@
    (let [v (get m k)]
      (if (counted? v)
        (if (and length (> (count v) length)) ;; level needed in spi
-         (binding [server.spi/*remotify-length* length]
+         (binding [server.spi/*remotify-length* length
+                   server.spi/*remotify-level* level]
            (let [rds (server.spi/remotify (seq v) *rds-server*)]
              (if (contains? rds :id)
                (assoc rds :id (-> rds meta :r/id))
