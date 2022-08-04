@@ -44,7 +44,7 @@
   "RDS prepl, uses *in* and *out* streams to serve RDS data to a remote repl."
   {:added "1.10"}
   [& {:keys []}]
-  (binding [*data-readers* (assoc *data-readers* 'r/id server.reader/lid-reader)          
+  (binding [*data-readers* (assoc *data-readers* 'l/id server.reader/lid-reader)          
             server.reader/*server* *rds-server*]
     (server/prepl *in* (outfn-proc *out*))))
 
