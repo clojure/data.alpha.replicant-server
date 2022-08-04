@@ -104,7 +104,7 @@
 
 (defn remotify-seq
   [server coll]
-  (if (<= (bounded-count *remotify-length* coll) *remotify-length*)
+  (if (<= (bounded-count (inc *remotify-length*) coll) *remotify-length*)
     (if (has-remotes? coll)
       (with-meta (remotify-head server coll) {:id (object->rid server coll)})
       coll)
