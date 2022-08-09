@@ -11,9 +11,7 @@
         mval (if (instance? clojure.lang.IObj val)
                (with-meta val {:r/id rid})
                val)]
-    (if (seq? mval)
-      `(quote ~mval)
-      mval)))
+    `(quote ~mval)))
 
 (defn install-readers
   "Install reader set via the *default-data-reader-fn*"

@@ -123,7 +123,9 @@
   (binding [server.spi/*remotify-length* nil]
     (server.spi/remotify [1 2 3] *rds-server*))
     
-  (.getIfPresent (.rid->obj *rds-server*) #uuid "6e5a7b9c-0876-4d7d-b7e4-023734d9d9ec")
+  (def e (.getIfPresent (.rid->obj *rds-server*) #uuid "f58ca48c-a318-4593-821d-8dfa5bb21f30"))
+
+  (first e)
 
   (read-string (pr-str (server.spi/remotify (range 0 50) rds)))
 )
