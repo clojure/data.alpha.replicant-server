@@ -6,7 +6,7 @@
     [java.io Writer]
     [clojure.lang IDeref Seqable Associative ILookup Sequential Indexed Counted IFn
                   IMeta IPersistentCollection IPersistentStack IPersistentMap IPersistentSet
-                  ArityException]))
+                  IPersistentVector ArityException]))
 
 (set! *warn-on-reflection* true)
 
@@ -52,6 +52,8 @@
   (valAt [this k] (val (.entryAt this k)))
 
   Sequential
+
+  IPersistentVector
 
   IPersistentStack
   (peek [this]
