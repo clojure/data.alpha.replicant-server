@@ -1,4 +1,4 @@
-(ns replicant
+(ns data.replicant.server.prepl
   (:require
    [data.replicator.server.spi :as server.spi]
    [data.replicator.server.reader :as server.reader]
@@ -61,7 +61,7 @@
    (let [server-socket (server/start-server 
                         {:port   port,
                          :name   "rds",
-                         :accept 'replicant/rds-prepl
+                         :accept 'data.replicant.server.prepl/rds-prepl
                          :args   [{:valf valf-proc}]})]
      server-socket)))
 
