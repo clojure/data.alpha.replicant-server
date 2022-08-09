@@ -4,6 +4,8 @@
    [data.replicator.server.reader :as server.reader]
    [data.replicator.server.impl.cache :as server.cache]
    [clojure.core.server :as server])
+  (:import
+   [clojure.lang MapEntry])
   (:refer-clojure :exclude [seq]))
 
 (defn setup-rds []
@@ -94,25 +96,28 @@
      (annotate (clojure.core/seq v) depth-opts))))
 
 (defn entry
-  ([m k] (get m k))
+  ([m k] (MapEntry/create k (get m k)))
   ([m k {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remotify-length*, level server.spi/*remotify-level*}}]
-   (let [v (get m k)]
-     (if (counted? v)
-       (if (and length (> (count v) length)) ;; level needed in spi
-         (binding [server.spi/*remotify-length* length
-                   server.spi/*remotify-level* level]
-           (let [rds (server.spi/remotify (seq v) *rds-server*)]
-             (if (contains? rds :id)
-               (assoc rds :id (-> rds meta :r/id))
-               (annotate rds depth-opts))))
-         (annotate v depth-opts))
-       (annotate v depth-opts)))))
+   (let [v (get m k)
+         retv (if (counted? v)
+                (if (and length (> (count v) length)) ;; level needed in spi
+                  (binding [server.spi/*remotify-length* length
+                            server.spi/*remotify-level*  level]
+                    (let [rds (server.spi/remotify (seq v) *rds-server*)]
+                      (if (contains? rds :id)
+                        (assoc rds :id (-> rds meta :r/id))
+                        (annotate rds depth-opts))))
+                  (annotate v depth-opts))
+                (annotate v depth-opts))]
+     (annotate (MapEntry/create k retv) depth-opts))))
 
 (comment
   (def svr (start-remote-replicant))
 
   (clojure.core.server/stop-server "rds")
 
+  (tap> (vec (range 100)))
+  (tap> (zipmap (range 50) (range 50)))
   (->> (range 0 100) (apply hash-map))
 
   (binding [server.spi/*remotify-length* nil]
