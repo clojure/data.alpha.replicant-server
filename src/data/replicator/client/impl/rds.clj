@@ -4,6 +4,7 @@
     [data.replicator.client.impl.protocols :as p])
   (:import
     [java.io Writer]
+    [java.util Collection Map]
     [clojure.lang IDeref Seqable Associative ILookup Sequential Indexed Counted IFn
                   IMeta IPersistentCollection IPersistentStack IPersistentMap IPersistentSet
                   IPersistentVector ArityException]))
@@ -55,6 +56,8 @@
 
   IPersistentVector
 
+  Collection
+
   IPersistentStack
   (peek [this]
     (when (pos? count) (.valAt this (dec count))))
@@ -80,8 +83,8 @@
       2 (.invoke this (nth args 0) (nth args 1))
       (throw (ArityException. (count args) "RemoteVector"))))
 
-  ;;Iterable
-  )
+  Iterable
+  (iterator [this] (clojure.lang.SeqIterator. (seq this))))
 
 ;(defmethod print-method RemoteVector [^RemoteVector v ^Writer w]
 ;  (.write w (str "#l/id "))
@@ -111,12 +114,25 @@
 
   IPersistentMap
 
+  Iterable
+  (iterator [this] (clojure.lang.SeqIterator. (seq this)))
+
+  Map
+
   IMeta
   (meta [this] metadata)
 
-  ;;IFn
-  ;;Iterable
-  )
+  IFn
+  (invoke [this k] (.valAt this k))
+  (invoke [this k not-found]
+          (if-let [e (.entryAt this k)]
+            (val e)
+            not-found))
+  (applyTo [this args]
+           (condp = (count args)
+             1 (.invoke this (nth args 0))
+             2 (.invoke this (nth args 0) (nth args 1))
+             (throw (ArityException. (count args) "RemoteMap")))))
 
 (defn remote-map
   [relay count metadata]
@@ -130,6 +146,8 @@
   IPersistentCollection
   (count [this] count)
   (empty [this] #{})
+
+  Collection
 
   Counted
 
