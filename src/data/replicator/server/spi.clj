@@ -6,7 +6,7 @@
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
                   PersistentHashSet PersistentTreeSet PersistentVector]))
 
-(def ^:dynamic *remotify-length* 25)
+(def ^:dynamic *remotify-length* 250)
 (def ^:dynamic *remotify-level* 3)
 
 (defn object->rid
