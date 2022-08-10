@@ -116,8 +116,8 @@
 
   (clojure.core.server/stop-server "rds")
 
-  (tap> (vec (range 100)))
-  (tap> (zipmap (range 50) (range 50)))
+  (tap> (vec (range 400)))
+  (tap> (zipmap (range 400) (range 400)))
   (->> (range 0 100) (apply hash-map))
 
   (binding [server.spi/*remotify-length* nil]

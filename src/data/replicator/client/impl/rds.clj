@@ -19,9 +19,16 @@
   (relay-seq [this]
     (spi/remote-seq remote this))
   (relay-entry [this k]
-    (spi/remote-entry remote this k)))
+    (spi/remote-entry remote this k))
+  Object
+  (toString [this]
+    (spi/remote-string remote this)))
 
 (defmethod print-method Relay [^Relay relay ^Writer w]
+  (.write w (str "#l/id "))
+  (@#'print (.-rid relay)))
+
+(defmethod print-dup Relay [^Relay relay ^Writer w]
   (.write w (str "#l/id "))
   (@#'print (.-rid relay)))
 
@@ -158,11 +165,11 @@
   (get [this k] (val (p/relay-entry relay k)))
 
   IMeta
-  (meta [this] metadata)
+  (meta [this] metadata))
 
   ;;IFn
   ;;Iterable
-  )
+  
 
 (defn remote-set
   [relay count metadata]

@@ -12,4 +12,7 @@
   (remote-entry
     [this rid k] ;; not-found?
     [this rid k depth-opts]
-    "Returns entry of remote object for rid"))
+    "Returns entry of remote object for rid")
+  (remote-string
+   [this rid]
+   "Returns toString of remote object for rid"))
