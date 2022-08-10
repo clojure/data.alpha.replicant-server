@@ -118,6 +118,7 @@
   (iterator [this] (clojure.lang.SeqIterator. (seq this)))
 
   Map
+  (size [this] count)
 
   IMeta
   (meta [this] metadata)
@@ -148,6 +149,7 @@
   (empty [this] #{})
 
   Collection
+  (size [this] count)
 
   Counted
 
