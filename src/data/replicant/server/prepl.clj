@@ -10,7 +10,7 @@
 
 (defn setup-rds []
   (let [;; create server
-        cache-builder (-> (com.google.common.cache.CacheBuilder/newBuilder)
+        cache-builder (-> (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
                           (.maximumSize 100000))
         cache (server.cache/create-remote-cache cache-builder)]
     ;; install server and readers

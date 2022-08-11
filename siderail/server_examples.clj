@@ -27,7 +27,7 @@
 
 (map server/has-remotes? objects)
 
-(def cache-builder (-> (com.google.common.cache.CacheBuilder/newBuilder)
+(def cache-builder (-> (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
                        (.maximumSize 100000)))
 (def cache (cache/create-remote-cache cache-builder))
 

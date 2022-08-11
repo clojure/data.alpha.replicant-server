@@ -2,7 +2,7 @@
   (:require
     [data.replicator.server.impl.protocols :as p])
   (:import
-    [com.google.common.cache CacheBuilder RemovalListener Cache]
+    [com.github.benmanes.caffeine.cache Caffeine Cache RemovalListener]
     [java.util UUID]
     [java.util.function Function]
     [java.util.concurrent ConcurrentMap ConcurrentHashMap]))
@@ -16,10 +16,10 @@
     (apply [_ x] (f x))))
 
 (defn- gc-removed-value-listener
-  "Return a guava removal listener that calls f on the removed value."
+  "Return a cache removal listener that calls f on the removed value."
   ^RemovalListener [f]
   (reify RemovalListener
-    (onRemoval [_ note] (f (.getValue note)))))
+    (onRemoval [_this _k v _cause] (f v))))
 
 ;; create with create-remote-cache
 (deftype RemoteCache
@@ -40,8 +40,8 @@
     (.getIfPresent rid->obj k)))
 
 (defn create-remote-cache
-  "Given a guava cache builder, return a p/Cache that uses uuids for remote ids."
-  [^CacheBuilder builder]
+  "Given a caffeine cache builder, return a p/Cache that uses uuids for remote ids."
+  [^Caffeine builder]
   (let [identity->rid (ConcurrentHashMap.)
         rid->obj (.. builder
                    (removalListener
