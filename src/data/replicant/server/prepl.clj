@@ -62,7 +62,8 @@
                         {:port   port,
                          :name   "rds",
                          :accept 'data.replicant.server.prepl/rds-prepl
-                         :args   [{:valf valf-proc}]})]
+                         :args   [{:valf valf-proc}]
+                         :server-daemon false})]
      server-socket)))
 
 (defn annotate [val & {:as opts}]
