@@ -8,11 +8,15 @@
    [clojure.lang MapEntry])
   (:refer-clojure :exclude [seq]))
 
-(defn setup-rds []
+(set! *warn-on-reflection* true)
+
+(defn setup-rds
+  "Establishes an RDS environment by building an RDS cache that LRU evicts values based on
+  memory demands and installs the server-side readers. Returns the cache."
+  []
   (let [;; create server
         cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
-                        (.softValues)
-                        (.build))
+                        (.softValues))
         cache (server.cache/create-remote-cache cache-builder)]
     ;; install server and readers
     (alter-var-root #'server.reader/*server* (constantly cache))
