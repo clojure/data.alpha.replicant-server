@@ -1,7 +1,7 @@
-(ns data.replicator.client.reader
+(ns data.replicant.client.reader
   (:require
-    [data.replicator.client.impl.protocols :as p]
-    [data.replicator.client.impl.rds :as rds])
+    [data.replicant.client.impl.protocols :as p]
+    [data.replicant.client.impl.rds :as rds])
   (:import
     [clojure.lang MapEntry Seqable]))
 

@@ -1,7 +1,7 @@
-(ns data.replicator.client.impl.rds
+(ns data.replicant.client.impl.rds
   (:require
-    [data.replicator.client.spi :as spi]
-    [data.replicator.client.impl.protocols :as p])
+    [data.replicant.client.spi :as spi]
+    [data.replicant.client.impl.protocols :as p])
   (:import
     [java.io Writer]
     [java.util Collection Map]

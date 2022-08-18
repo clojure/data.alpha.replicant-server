@@ -1,6 +1,6 @@
-(ns data.replicator.server.reader
+(ns data.replicant.server.reader
   (:require
-    [data.replicator.server.spi :as spi]))
+    [data.replicant.server.spi :as spi]))
 
 (def ^:dynamic *server* nil)
 

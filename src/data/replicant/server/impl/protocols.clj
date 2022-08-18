@@ -1,4 +1,4 @@
-(ns data.replicator.server.impl.protocols)
+(ns data.replicant.server.impl.protocols)
 
 (defprotocol HasRemote
   (-has-remotes? [x] "Returns true if the -remotify of x will contain any remote refs."))

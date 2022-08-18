@@ -1,4 +1,4 @@
-(ns data.replicator.client.spi)
+(ns data.replicant.client.spi)
 
 (defprotocol IRemote
   (remote-fetch

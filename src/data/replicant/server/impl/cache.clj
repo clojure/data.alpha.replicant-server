@@ -1,6 +1,6 @@
-(ns data.replicator.server.impl.cache
+(ns data.replicant.server.impl.cache
   (:require
-    [data.replicator.server.impl.protocols :as p])
+    [data.replicant.server.impl.protocols :as p])
   (:import
     [com.github.benmanes.caffeine.cache Caffeine Cache RemovalListener]
     [java.util UUID]

@@ -1,8 +1,8 @@
 (ns data.replicant.server.prepl
   (:require
-   [data.replicator.server.spi :as server.spi]
-   [data.replicator.server.reader :as server.reader]
-   [data.replicator.server.impl.cache :as server.cache]
+   [data.replicant.server.spi :as server.spi]
+   [data.replicant.server.reader :as server.reader]
+   [data.replicant.server.impl.cache :as server.cache]
    [clojure.core.server :as server])
   (:import
    [clojure.lang MapEntry])

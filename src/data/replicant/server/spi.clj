@@ -1,6 +1,6 @@
-(ns data.replicator.server.spi
+(ns data.replicant.server.spi
   (:require
-    [data.replicator.server.impl.protocols :as p])
+    [data.replicant.server.impl.protocols :as p])
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
