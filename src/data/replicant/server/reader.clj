@@ -7,11 +7,11 @@
 (defn lid-reader
   "Read '#l/id id' and return the cached object"
   [rid]
-  (let [val  (spi/rid->object *server* rid)
-        mval (if (instance? clojure.lang.IObj val)
-               (with-meta val {:r/id rid})
-               val)]
-    `(quote ~mval)))
+  `(let [val#  (data.replicant.server.spi/rid->object *server* ~rid)
+         mval# (if (instance? clojure.lang.IObj val#)
+                (with-meta val# {:r/id ~rid})
+                val#)]
+     mval#))
 
 (defn install-readers
   "Install reader set via the *default-data-reader-fn*"
@@ -22,4 +22,5 @@
         (let [rfn (get {'l/id #'lid-reader} tag)]
           (cond rfn (rfn val)
                 prior (prior tag val)))))))
+
 
