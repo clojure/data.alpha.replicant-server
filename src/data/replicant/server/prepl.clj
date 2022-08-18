@@ -10,8 +10,9 @@
 
 (defn setup-rds []
   (let [;; create server
-        cache-builder (-> (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
-                          (.maximumSize 100000))
+        cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
+                        (.softValues)
+                        (.build))
         cache (server.cache/create-remote-cache cache-builder)]
     ;; install server and readers
     (alter-var-root #'server.reader/*server* (constantly cache))
