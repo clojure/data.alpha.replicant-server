@@ -27,9 +27,9 @@
 (def ^:dynamic *rds-server* (setup-rds))
 
 (defn remotify-proc [val]
-  (-> val
-      (server.spi/remotify *rds-server*)
-      pr-str))
+  (let [obj (server.spi/remotify val *rds-server*)]
+    (binding [*print-meta* true]
+      (pr-str obj))))
 
 (defn outfn-proc [out]
   (let [lock (Object.)]
@@ -56,7 +56,8 @@
     (server/prepl *in* (outfn-proc *out*))))
 
 (defn valf-proc [val]
-  (pr-str (server.spi/remotify val *rds-server*)))
+  (binding [*print-meta* true]
+    (pr-str (server.spi/remotify val *rds-server*))))
 
 (defn start-remote-replicant
   ([]
