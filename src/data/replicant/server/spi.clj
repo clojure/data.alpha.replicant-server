@@ -32,9 +32,9 @@
 
 ;; defrecords represent remote wire objects and print as "r/... data"
 (defrecord Ref [id])
-(defrecord RVec [id count])
-(defrecord RSet [id count])
-(defrecord RMap [id count])
+(defrecord RVec [id count meta])
+(defrecord RSet [id count meta])
+(defrecord RMap [id count meta])
 (defrecord RSeq [head rest])
 (defrecord RMapEntry [kv])
 
