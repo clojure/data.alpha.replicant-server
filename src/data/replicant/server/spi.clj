@@ -43,20 +43,22 @@
   (let [{:keys [id]} rref]
     (@#'clojure.core/print id)))
 
+(defn- record->map
+  "Convert record into bare map for printing"
+  [rec]
+  (into {} rec))
+
 (defmethod print-method RVec [rref ^Writer w]
   (.write w (str "#r/vec "))
-  (let [{:keys [id count]} rref]
-    (@#'clojure.core/print-map {:id id :count count} @#'clojure.core/pr-on w)))
+  (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w))
 
 (defmethod print-method RSet [rref ^Writer w]
   (.write w (str "#r/set "))
-  (let [{:keys [id count]} rref]
-    (@#'clojure.core/print-map {:id id :count count} @#'clojure.core/pr-on w)))
+  (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w))
 
 (defmethod print-method RMap [rref ^Writer w]
   (.write w (str "#r/map "))
-  (let [{:keys [id count]} rref]
-    (@#'clojure.core/print-map {:id id :count count} @#'clojure.core/pr-on w)))
+  (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w))
 
 (defmethod print-method RMapEntry [rref ^Writer w]
   (.write w (str "#r/kv "))
@@ -65,7 +67,7 @@
 (defmethod print-method RSeq [rref ^Writer w]
   (.write w (str "#r/seq "))
   (let [{:keys [head rest]} rref]
-    (@#'clojure.core/print-map {:head head :rest rest} @#'clojure.core/pr-on w)))
+    (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w)))
 
 (defn remotify-head
   "Remotify the first *remotify-length* items in the head of coll"
