@@ -26,7 +26,7 @@
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
   (let [ret (p/-remotify obj server)]
-    (println "remotify" (class obj) "=>" *remotify-level*  #_(class ret))
+    ;;(println "remotify" (class obj) "=>" *remotify-level*  #_(class ret))
     ret))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
@@ -196,7 +196,10 @@
        [#{1 2 #{3 4 #{5}}}
         [1 2 [3 4 [5]]]
         {:a {:b {:c 3}}}
-        [1 2 [3 4]]])
+        [1 2 [3 4]]
+        [1 2 [3 4] [5 6] [7 8]]
+        [1 2 [3 4] {5 6} #{7 8}]
+        ])
   
   (map #(binding [*remotify-level* 2]
           (has-remotes? %))
