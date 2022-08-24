@@ -4,13 +4,6 @@
   com.github.ben-manes.caffeine/caffeine {:mvn/version "3.1.1"}}
 
  :aliases
- {;; clj -X:s
-  :s {:exec-fn data.replicator.server.api/start}
-
-  ;; clj -X:c
-  :c {:exec-fn data.replicator.client.api/start}
-
-  ;; clj -X:r
-  :r {:extra-paths ["siderail"] :exec-fn replicant/start-transmitter}
+ {
  } 
  }
