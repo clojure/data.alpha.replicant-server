@@ -7,7 +7,7 @@
                   PersistentHashSet PersistentTreeSet PersistentVector]))
 
 (def ^:dynamic *remotify-length* 250)
-(def ^:dynamic *remotify-level* 3)
+(def ^:dynamic *remotify-level* 5)
 
 (defn object->rid
   [server obj]
@@ -22,12 +22,11 @@
   [obj]
   (p/-has-remotes? obj))
 
-;; TODO: add depth check
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
   (let [ret (p/-remotify obj server)]
-    ;;(println "remotify" (class obj) "=>" (class ret))
+    (println "remotify" (class obj) "=>" *remotify-level*  #_(class ret))
     ret))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
@@ -72,14 +71,19 @@
 (defn remotify-head
   "Remotify the first *remotify-length* items in the head of coll"
   [server coll]
-  ;;(println "remotify-head")
-  (into [] (comp (take *remotify-length*) (map #(remotify % server))) coll))
+  (binding [*remotify-level* (and *remotify-level* (dec *remotify-level*))]
+    ;;(println "remotify-head")  
+    (into [] (comp (take *remotify-length*)
+                   (map (fn [elem] (remotify elem server))))
+          coll)))
 
 (defn remotify-set
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into #{} (remotify-head server coll)) {:id (object->rid server coll)})
+      (if (and *remotify-level* (zero? *remotify-level*))
+        (map->Ref {:id (object->rid server coll)})
+        (with-meta (into #{} (remotify-head server coll)) {:id (object->rid server coll)}))
       coll)
     (map->RSet {:id (object->rid server coll)
                 :count (count coll)})))
@@ -88,9 +92,11 @@
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (apply hash-map (interleave (remotify-head server (keys coll))
-                                   (remotify-head server (vals coll))))
-        {:id (object->rid server coll)})
+      (if (and *remotify-level* (zero? *remotify-level*))
+        (map->Ref {:id (object->rid server coll)})
+        (with-meta (apply hash-map (interleave (remotify-head server (keys coll))
+                                               (remotify-head server (vals coll))))
+          {:id (object->rid server coll)}))
       coll)
     (map->RMap {:id (object->rid server coll)
                 :count (count coll)})))
@@ -99,7 +105,9 @@
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into [] (remotify-head server coll)) {:id (object->rid server coll)})
+      (if (and *remotify-level* (zero? *remotify-level*))
+        (map->Ref {:id (object->rid server coll)})
+        (with-meta (into [] (remotify-head server coll)) {:id (object->rid server coll)}))
       coll)
     (map->RVec {:id (object->rid server coll)
                 :count (count coll)})))
@@ -124,8 +132,8 @@
   IPersistentCollection
   (-has-remotes?
     [coll]
-    (binding [*remotify-level* (dec *remotify-level*)]
-      (or (zero? *remotify-level*)
+    (binding [*remotify-level* (and *remotify-level* (dec *remotify-level*))]
+      (or (neg? *remotify-level*)
         (transduce
           (take *remotify-length*)
           (completing (fn [result item] (if (has-remotes? item)
@@ -181,3 +189,20 @@
 (defn register
   [server obj]
   (map->Ref {:id (object->rid server obj)}))
+
+(comment
+  (map #(binding [*remotify-level* 2]
+          (remotify % data.replicant.server.reader/*server*))
+       [#{1 2 #{3 4 #{5}}}
+        [1 2 [3 4 [5]]]
+        {:a {:b {:c 3}}}
+        [1 2 [3 4]]])
+  
+  (map #(binding [*remotify-level* 2]
+          (has-remotes? %))
+       [#{1 2 #{3 4 #{5}}}
+        [1 2 [3 4 [5]]]
+        {:a {:b {:c 3}}}
+        [1 2 [3 4]]
+        [1 2 [(java.util.Date.)]]])
+)
