@@ -133,7 +133,7 @@
   (-has-remotes?
     [coll]
     (binding [*remotify-level* (and *remotify-level* (dec *remotify-level*))]
-      (or (neg? *remotify-level*)
+      (or (and *remotify-level* (neg? *remotify-level*))
         (transduce
           (take *remotify-length*)
           (completing (fn [result item] (if (has-remotes? item)
