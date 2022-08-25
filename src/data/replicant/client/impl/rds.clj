@@ -93,13 +93,9 @@
   Iterable
   (iterator [this] (clojure.lang.SeqIterator. (seq this))))
 
-;(defmethod print-method RemoteVector [^RemoteVector v ^Writer w]
-;  (.write w (str "#l/id "))
-;  (@#'print (.-rid relay)))
-
 (defn remote-vector
   [relay count metadata]
-  (->RemoteVector relay count (assoc metadata :id relay)))
+  (->RemoteVector relay count metadata))
 
 (deftype RemoteMap
   [relay count metadata]
@@ -144,7 +140,7 @@
 
 (defn remote-map
   [relay count metadata]
-  (->RemoteMap relay count (assoc metadata :id relay)))
+  (->RemoteMap relay count metadata))
 
 (deftype RemoteSet
   [relay count metadata]
@@ -173,4 +169,4 @@
 
 (defn remote-set
   [relay count metadata]
-  (->RemoteSet relay count (assoc metadata :id relay)))
+  (->RemoteSet relay count metadata))
