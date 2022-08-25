@@ -118,6 +118,10 @@
                 (annotate v depth-opts))]
      (annotate (MapEntry/create k retv) depth-opts))))
 
+(defn string
+  [v]
+  (str v))
+
 (comment
   (def svr (start-remote-replicant))
 
@@ -148,8 +152,11 @@
                                            (throw (RuntimeException. (str "Unknown reader tag:" tag)))))
               *print-meta* true]
       (let [val (with-meta [1 2] (zipmap (range 1000) (range 1000)))]
-        (println "val" val)
+        (println "val     " val)
         (let [r (server.spi/remotify val cache)]
           (println "remotify" r)
-          (println "pr" (pr-str r))))))
+          (println "pr      " (pr-str r))))))
+  
+  ;; Thread dump
+  (.dumpAllThreads (java.lang.management.ManagementFactory/getThreadMXBean) false false)
   )
