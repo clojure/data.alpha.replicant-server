@@ -129,10 +129,27 @@
 
   (binding [server.spi/*remotify-length* nil]
     (server.spi/remotify [1 2 3] *rds-server*))
-    
+
   (def e (.getIfPresent (.rid->obj *rds-server*) #uuid "f58ca48c-a318-4593-821d-8dfa5bb21f30"))
 
   (first e)
 
   (read-string (pr-str (server.spi/remotify (range 0 50) rds)))
-)
+
+  ;; test server-side printing
+  (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder) (.softValues))
+        cache (server.cache/create-remote-cache cache-builder)]
+    (alter-var-root #'server.reader/*server* (constantly cache))
+    (server.reader/install-readers)
+
+    (binding [*default-data-reader-fn* (fn [tag val]
+                                         (if (= tag 'l/id)
+                                           (server.reader/lid-reader val)
+                                           (throw (RuntimeException. (str "Unknown reader tag:" tag)))))
+              *print-meta* true]
+      (let [val (with-meta [1 2] (zipmap (range 1000) (range 1000)))]
+        (println "val" val)
+        (let [r (server.spi/remotify val cache)]
+          (println "remotify" r)
+          (println "pr" (pr-str r))))))
+  )

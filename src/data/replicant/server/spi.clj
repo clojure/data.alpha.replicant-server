@@ -22,19 +22,19 @@
   [obj]
   (p/-has-remotes? obj))
 
-;; TODO: add depth check
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
-  (let [ret (p/-remotify obj server)]
-    ;;(println "remotify" (class obj) "=>" (class ret))
-    ret))
+  (let [robj (p/-remotify obj server)]
+    (if-let [m (meta robj)]
+      (with-meta robj (p/-remotify m server))
+      robj)))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
 (defrecord Ref [id])
-(defrecord RVec [id count meta])
-(defrecord RSet [id count meta])
-(defrecord RMap [id count meta])
+(defrecord RVec [id count])
+(defrecord RSet [id count])
+(defrecord RMap [id count])
 (defrecord RSeq [head rest])
 (defrecord RMapEntry [kv])
 
@@ -79,39 +79,42 @@
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into #{} (remotify-head server coll)) {:id (object->rid server coll)})
+      (into #{} (remotify-head server coll)) 
       coll)
-    (map->RSet {:id (object->rid server coll)
-                :count (count coll)})))
+    (map->RSet (cond-> {:id (object->rid server coll)
+                        :count (count coll)}
+                 (meta coll) (assoc :meta (remotify (meta coll) server))))))
 
 (defn remotify-map
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (apply hash-map (interleave (remotify-head server (keys coll))
-                                   (remotify-head server (vals coll))))
-        {:id (object->rid server coll)})
+      (apply hash-map (interleave (remotify-head server (keys coll))
+                                  (remotify-head server (vals coll))))
       coll)
-    (map->RMap {:id (object->rid server coll)
-                :count (count coll)})))
+    (map->RMap (cond-> {:id (object->rid server coll)
+                        :count (count coll)}
+                 (meta coll) (assoc :meta (remotify (meta coll) server))))))
 
 (defn remotify-vector
   [server coll]
   (if (<= (count coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (into [] (remotify-head server coll)) {:id (object->rid server coll)})
+      (into [] (remotify-head server coll))
       coll)
-    (map->RVec {:id (object->rid server coll)
-                :count (count coll)})))
+    (map->RVec (cond-> {:id    (object->rid server coll)
+                        :count (count coll)}
+                 (meta coll) (assoc :meta (remotify (meta coll) server))))))
 
 (defn remotify-seq
   [server coll]
   (if (<= (bounded-count (inc *remotify-length*) coll) *remotify-length*)
     (if (has-remotes? coll)
-      (with-meta (remotify-head server coll) {:id (object->rid server coll)})
+      (remotify-head server coll)
       coll)
-    (map->RSeq {:head (remotify-head server coll)
-                :rest (object->rid server (drop *remotify-length* coll))})))
+    (map->RSeq (cond-> {:head (remotify-head server coll)
+                        :rest (object->rid server (drop *remotify-length* coll))}
+                 (meta coll) (assoc :meta (meta coll))))))
 
 (extend-protocol p/HasRemote
   nil (-has-remotes? [_] false)
