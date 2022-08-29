@@ -98,7 +98,7 @@
      (if (and length (> (count v) length)) ;; level needed in spi
        (binding [server.spi/*remotify-length* length
                  server.spi/*remotify-level* level]
-         (annotate (server.spi/remotify (seq v) *rds-server*) depth-opts))
+         (annotate (server.spi/remotify (clojure.core/seq v) *rds-server*) depth-opts))
        (annotate (clojure.core/seq v) depth-opts))
      (annotate (clojure.core/seq v) depth-opts))))
 
@@ -110,7 +110,7 @@
                 (if (and length (> (count v) length)) ;; level needed in spi
                   (binding [server.spi/*remotify-length* length
                             server.spi/*remotify-level*  level]
-                    (let [rds (server.spi/remotify (seq v) *rds-server*)]
+                    (let [rds (server.spi/remotify (clojure.core/seq v) *rds-server*)]
                       (if (contains? rds :id)
                         (assoc rds :id (-> rds meta :r/id))
                         (annotate rds depth-opts))))
