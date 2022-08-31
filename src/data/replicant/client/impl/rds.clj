@@ -1,5 +1,6 @@
 (ns data.replicant.client.impl.rds
   (:require
+    [clojure.core.protocols :as corep]
     [data.replicant.client.spi :as spi]
     [data.replicant.client.impl.protocols :as p])
   (:import
