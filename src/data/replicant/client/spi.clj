@@ -15,4 +15,10 @@
     "Returns entry of remote object for rid")
   (remote-string
    [this rid]
-   "Returns toString of remote object for rid"))
+   "Returns toString of remote object for rid")
+  (remote-datafy
+   [this rid]
+   "Returns datafy of remote object for rid")
+  (remote-nav
+   [this rid k v]
+   "Returns nav of remote object for rid at k"))

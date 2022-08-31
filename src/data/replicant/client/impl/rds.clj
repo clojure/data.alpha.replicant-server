@@ -22,7 +22,13 @@
     (spi/remote-entry remote this k))
   Object
   (toString [this]
-    (spi/remote-string remote this)))
+    (spi/remote-string remote this))
+  corep/Datafiable
+  (datafy [this]
+    (spi/remote-datafy remote this))
+  corep/Navigable
+  (nav [this k v]
+    (spi/remote-nav remote this k v)))
 
 (defmethod print-method Relay [^Relay relay ^Writer w]
   (.write w (str "#l/id "))
