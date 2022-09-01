@@ -21,15 +21,14 @@
     (spi/remote-seq remote this))
   (relay-entry [this k]
     (spi/remote-entry remote this k))
+
   Object
   (toString [this]
     (spi/remote-string remote this))
+
   corep/Datafiable
   (datafy [this]
-    (spi/remote-datafy remote this))
-  corep/Navigable
-  (nav [this k v]
-    (spi/remote-nav remote this k v)))
+    (spi/remote-datafy remote this)))
 
 (defmethod print-method Relay [^Relay relay ^Writer w]
   (.write w (str "#l/id "))
