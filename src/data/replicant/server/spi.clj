@@ -6,6 +6,7 @@
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
                   PersistentHashSet PersistentTreeSet PersistentVector]))
 
+(def ^:dynamic *rds-cache*)
 (def ^:dynamic *remotify-length* 250)
 (def ^:dynamic *remotify-level* 5)
 
