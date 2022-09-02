@@ -18,4 +18,7 @@
     "Returns toString of remote object for rid")
   (remote-datafy
     [this rid]
-    "Returns datafy of remote object for rid"))
+    "Returns datafy of remote object for rid")
+  (remote-apply
+    [this rid args]
+    "Invoke remote function with args"))

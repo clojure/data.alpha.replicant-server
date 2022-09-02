@@ -1,9 +1,16 @@
 (ns data.replicant.client.reader
   (:require
-    [data.replicant.client.impl.protocols :as p]
     [data.replicant.client.impl.rds :as rds])
   (:import
-    [clojure.lang MapEntry Seqable]))
+    [clojure.lang MapEntry]))
+
+;; {'r/id #'rid-reader
+;;  'r/seq #'seq-reader
+;;  'r/kv #'kv-reader
+;;  'r/vec #'vector-reader
+;;  'r/map #'map-reader
+;;  'r/set #'set-reader
+;;  'r/fn #'fn-reader}
 
 (def ^:dynamic *remote-client* nil)
 
@@ -37,17 +44,7 @@
   [{:keys [id count meta] :as m}]
   (rds/remote-set (rid-reader id) count meta))
 
-(defn install-readers
-  "Install reader set via the *default-data-reader-fn*"
-  []
-  (let [prior *default-data-reader-fn*]
-    (set! *default-data-reader-fn*
-      (fn [tag val]
-        (let [rfn (get {'r/id #'rid-reader
-                        'r/seq #'seq-reader
-                        'r/kv #'kv-reader
-                        'r/vec #'vector-reader
-                        'r/map #'map-reader
-                        'r/set #'set-reader} tag)]
-          (cond rfn (rfn val)
-                prior (prior tag val)))))))
+(defn fn-reader
+  "Read '#r/fn {:id id}' and return an IFn"
+  [{:keys [id] :as m}]
+  (rds/remote-fn (rid-reader id)))

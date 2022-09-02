@@ -4,7 +4,7 @@
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
-                  PersistentHashSet PersistentTreeSet PersistentVector]))
+                  PersistentHashSet PersistentTreeSet PersistentVector IFn]))
 
 (def ^:dynamic *rds-cache*)
 (def ^:dynamic *remotify-length* 250)
@@ -38,6 +38,7 @@
 (defrecord RMap [id count])
 (defrecord RSeq [head rest])
 (defrecord RMapEntry [kv])
+(defrecord RFn [id])
 
 (defmethod print-method Ref [rref ^Writer w]
   (.write w (str "#r/id "))
@@ -68,6 +69,11 @@
 (defmethod print-method RSeq [rref ^Writer w]
   (.write w (str "#r/seq "))
   (let [{:keys [head rest]} rref]
+    (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w)))
+
+(defmethod print-method RFn [rref ^Writer w]
+  (.write w (str "#r/fn "))
+  (let [{:keys [id]} rref]
     (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w)))
 
 (defn remotify-head
@@ -126,6 +132,10 @@
                         :rest (object->rid server (drop *remotify-length* coll))}
                  (meta coll) (assoc :meta (meta coll))))))
 
+(defn remotify-fn
+  [server f]
+  (map->RFn {:id (object->rid server f)}))
+
 (extend-protocol p/HasRemote
   nil (-has-remotes? [_] false)
   Boolean (-has-remotes? [_] false)
@@ -177,6 +187,9 @@
   ISeq
   (-remotify [coll server] (remotify-seq server coll))
 
+  IFn
+  (-remotify [f server] (remotify-fn server f))
+
   Boolean (-remotify [x _] x)
   String (-remotify [x _] x)
   Keyword (-remotify [x _] x)
@@ -189,7 +202,8 @@
   RSet (-remotify [x _] x)
   RMap (-remotify [x _] x)
   RSeq (-remotify [x _] x)
-  RMapEntry (-remotify [x _] x))
+  RMapEntry (-remotify [x _] x)
+  RFn (-remotify [x _] x))
 
 (defn register
   [server obj]
