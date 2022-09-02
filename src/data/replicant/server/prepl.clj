@@ -63,7 +63,7 @@
   ([]
    (start-remote-replicant nil))
   ([{:keys [port] :or {port 5555}}]
-   (println "Starting...")
+   (println "Replicant listening on" port "...")
    (let [server-socket (server/start-server 
                         {:port   port,
                          :name   "rds",
