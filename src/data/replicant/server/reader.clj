@@ -5,7 +5,7 @@
 (defn lid-reader
   "Read '#l/id id' and return the cached object"
   [rid]
-  `(let [val#  (data.replicant.server.spi/rid->object *server* ~rid)
+  `(let [val#  (data.replicant.server.spi/rid->object spi/*rds-cache* ~rid)
          mval# (if (not (nil? val#))
                  (if (instance? clojure.lang.IObj val#)
                    (with-meta val# {:r/id ~rid})
