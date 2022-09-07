@@ -7,8 +7,9 @@
                   PersistentHashSet PersistentTreeSet PersistentVector IFn]))
 
 (def ^:dynamic *rds-cache*)
-(def ^:dynamic *remotify-length* 250)
-(def ^:dynamic *remotify-level* 5)
+(def ^:dynamic *depth-length* 250)
+(def ^:dynamic *remote-lengths* [10 5])
+(def ^:dynamic *remote-depth* 5)
 
 (defn object->rid
   [server obj]
@@ -77,19 +78,19 @@
     (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w)))
 
 (defn remotify-head
-  "Remotify the first *remotify-length* items in the head of coll"
+  "Remotify the first *depth-length* items in the head of coll"
   [server coll]
-  (binding [*remotify-level* (and *remotify-level* (dec *remotify-level*))]
+  (binding [*remote-depth* (and *remote-depth* (dec *remote-depth*))]
     ;;(println "remotify-head")  
-    (into [] (comp (take *remotify-length*)
+    (into [] (comp (take *depth-length*)
                    (map (fn [elem] (remotify elem server))))
           coll)))
 
 (defn remotify-set
   [server coll]
-  (if (<= (count coll) *remotify-length*)
+  (if (<= (count coll) *depth-length*)
     (if (has-remotes? coll)
-      (if (and *remotify-level* (zero? *remotify-level*))
+      (if (and *remote-depth* (zero? *remote-depth*))
         (map->Ref {:id (object->rid server coll)})
         (into #{} (remotify-head server coll)))
       coll)
@@ -99,9 +100,9 @@
 
 (defn remotify-map
   [server coll]
-  (if (<= (count coll) *remotify-length*)
+  (if (<= (count coll) *depth-length*)
     (if (has-remotes? coll)
-      (if (and *remotify-level* (zero? *remotify-level*))
+      (if (and *remote-depth* (zero? *remote-depth*))
         (map->Ref {:id (object->rid server coll)})
         (apply hash-map (interleave (remotify-head server (keys coll))
                                     (remotify-head server (vals coll)))))
@@ -112,9 +113,9 @@
 
 (defn remotify-vector
   [server coll]
-  (if (<= (count coll) *remotify-length*)
+  (if (<= (count coll) *depth-length*)
     (if (has-remotes? coll)
-      (if (and *remotify-level* (zero? *remotify-level*))
+      (if (and *remote-depth* (zero? *remote-depth*))
         (map->Ref {:id (object->rid server coll)})
         (into [] (remotify-head server coll)))
       coll)
@@ -124,12 +125,12 @@
 
 (defn remotify-seq
   [server coll]
-  (if (<= (bounded-count (inc *remotify-length*) coll) *remotify-length*)
+  (if (<= (bounded-count (inc *depth-length*) coll) *depth-length*)
     (if (has-remotes? coll)
       (remotify-head server coll)
       coll)
     (map->RSeq (cond-> {:head (remotify-head server coll)
-                        :rest (object->rid server (drop *remotify-length* coll))}
+                        :rest (object->rid server (drop *depth-length* coll))}
                  (meta coll) (assoc :meta (meta coll))))))
 
 (defn remotify-fn
@@ -147,10 +148,10 @@
   IPersistentCollection
   (-has-remotes?
     [coll]
-    (binding [*remotify-level* (and *remotify-level* (dec *remotify-level*))]
-      (or (and *remotify-level* (neg? *remotify-level*))
+    (binding [*remote-depth* (and *remote-depth* (dec *remote-depth*))]
+      (or (and *remote-depth* (neg? *remote-depth*))
         (transduce
-          (take *remotify-length*)
+          (take *depth-length*)
           (completing (fn [result item] (if (has-remotes? item)
                                           (reduced true)
                                           false)))
@@ -210,8 +211,13 @@
   (map->Ref {:id (object->rid server obj)}))
 
 (comment
-  (map #(binding [*remotify-level* 2]
-          (remotify % data.replicant.server.reader/*server*))
+  (def C
+    (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
+                          (.softValues))]
+      (data.replicant.server.impl.cache/create-remote-cache cache-builder)))
+  
+  (map #(binding [*remote-depth* 2]
+          (remotify % C))
        [#{1 2 #{3 4 #{5}}}
         [1 2 [3 4 [5]]]
         {:a {:b {:c 3}}}
@@ -220,7 +226,7 @@
         [1 2 [3 4] {5 6} #{7 8}]
         ])
   
-  (map #(binding [*remotify-level* 2]
+  (map #(binding [*remote-depth* 2]
           (has-remotes? %))
        [#{1 2 #{3 4 #{5}}}
         [1 2 [3 4 [5]]]
