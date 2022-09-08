@@ -25,7 +25,9 @@
   (binding [*remote-depth* (and *remote-depth* (dec *remote-depth*))
             *depth-length* (or (first *remote-lengths*) *depth-length*)
             *remote-lengths* (next *remote-lengths*)]
-    (p/-has-remotes? obj)))
+    (or
+     (p/-has-remotes? obj)
+     (p/-has-remotes? (meta obj)))))
 
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
