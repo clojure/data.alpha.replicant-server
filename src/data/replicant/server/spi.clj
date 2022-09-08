@@ -7,8 +7,8 @@
                   PersistentHashSet PersistentTreeSet PersistentVector IFn]))
 
 (def ^:dynamic *rds-cache*)
-(def ^:dynamic *depth-length* 250)
-(def ^:dynamic *remote-lengths* [10 5])
+(def ^:dynamic *remote-lengths* [250])
+(def ^:private ^:dynamic *depth-length* 250)
 (def ^:dynamic *remote-depth* 5)
 
 (defn object->rid
@@ -22,15 +22,20 @@
 (defn has-remotes?
   "Returns true if remotify of obj would include remote object references."
   [obj]
-  (p/-has-remotes? obj))
+  (binding [*remote-depth* (and *remote-depth* (dec *remote-depth*))
+            *depth-length* (or (first *remote-lengths*) *depth-length*)
+            *remote-lengths* (next *remote-lengths*)]
+    (p/-has-remotes? obj)))
 
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
-  (let [robj (p/-remotify obj server)]
-    (if-let [m (meta robj)]
-      (with-meta robj (p/-remotify m server))
-      robj)))
+  (binding [*depth-length* (or (first *remote-lengths*) *depth-length*)
+            *remote-lengths* (next *remote-lengths*)]
+    (let [robj (p/-remotify obj server)]
+      (if-let [m (meta robj)]
+        (with-meta robj (p/-remotify m server))
+        robj))))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
 (defrecord Ref [id])
@@ -81,7 +86,7 @@
   "Remotify the first *depth-length* items in the head of coll"
   [server coll]
   (binding [*remote-depth* (and *remote-depth* (dec *remote-depth*))]
-    ;;(println "remotify-head")  
+;;    (println "remotify-head " *remote-lengths* *depth-length*)
     (into [] (comp (take *depth-length*)
                    (map (fn [elem] (remotify elem server))))
           coll)))
@@ -100,6 +105,7 @@
 
 (defn remotify-map
   [server coll]
+;;  (println "remotify-map " *depth-length* " ?= " (count coll) " r? " (has-remotes? coll))
   (if (<= (count coll) *depth-length*)
     (if (has-remotes? coll)
       (if (and *remote-depth* (zero? *remote-depth*))
@@ -113,6 +119,7 @@
 
 (defn remotify-vector
   [server coll]
+;;  (println "remotify-vector " *depth-length* " ?= " (count coll) " r? " (has-remotes? coll))
   (if (<= (count coll) *depth-length*)
     (if (has-remotes? coll)
       (if (and *remote-depth* (zero? *remote-depth*))
@@ -148,15 +155,17 @@
   IPersistentCollection
   (-has-remotes?
     [coll]
-    (binding [*remote-depth* (and *remote-depth* (dec *remote-depth*))]
-      (or (and *remote-depth* (neg? *remote-depth*))
+;;    (println "has-remotes? " *remote-lengths* *depth-length*)
+    (or (and *remote-depth* (neg? *remote-depth*))
+        (> (bounded-count (inc *depth-length*) coll) *depth-length*)
         (transduce
-          (take *depth-length*)
-          (completing (fn [result item] (if (has-remotes? item)
-                                          (reduced true)
-                                          false)))
-          false
-          coll)))))
+         (take *depth-length*)
+         (completing (fn [result item]
+                       (if (has-remotes? item)
+                         (reduced true)
+                         false)))
+         false
+         coll))))
 
 (extend-protocol p/Remotify
   Object
@@ -211,26 +220,46 @@
   (map->Ref {:id (object->rid server obj)}))
 
 (comment
+  (require 'data.replicant.server.impl.cache)
   (def C
     (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
                           (.softValues))]
       (data.replicant.server.impl.cache/create-remote-cache cache-builder)))
+
+  (do (println :===================================)
+      (binding [*remote-lengths* [3 1]
+                *remote-depth* 1]
+        (remotify [[1 2 3] [4 5 6]] C)))
+
+  (do (println :===================================)
+      (binding [*remote-lengths* [3 1]]
+        (has-remotes? [[1 2 3] [4 5 6]])))
   
-  (map #(binding [*remote-depth* 2]
-          (remotify % C))
-       [#{1 2 #{3 4 #{5}}}
-        [1 2 [3 4 [5]]]
-        {:a {:b {:c 3}}}
-        [1 2 [3 4]]
-        [1 2 [3 4] [5 6] [7 8]]
-        [1 2 [3 4] {5 6} #{7 8}]
-        ])
+  (do (println :===================================)
+      (binding [*remote-lengths* [1]]
+        (remotify {:a {:b {:c 3}} :d 4} C)))
+
+  (do (println :===================================)
+      (binding [*remote-lengths* [2]]
+        (remotify {:a {:b {:c 3}}} C)))
   
-  (map #(binding [*remote-depth* 2]
-          (has-remotes? %))
-       [#{1 2 #{3 4 #{5}}}
-        [1 2 [3 4 [5]]]
-        {:a {:b {:c 3}}}
-        [1 2 [3 4]]
-        [1 2 [(java.util.Date.)]]])
+  (do (println :===================================)
+      (map #(binding [*remote-lengths* [3 1]]
+              (remotify % C))
+           [#{1 2 #{3 4 #{5}}}
+            [1 2 [3 4 [5]]]
+            {:a {:b {:c 3}}}
+            [1 2 [3 4]]
+            [1 2 [3 4] [5 6] [7 8]]
+            [1 2 [3 4] {5 6} #{7 8}]
+            [1 2 [(java.util.Date.)]]]))
+
+  (do (println :===================================)
+      (map #(binding [*remote-lengths* [2]]
+              (has-remotes? %))
+           [#{1 2 #{3 4 #{5}}}
+            [1 2 [3 4 [5]]]
+            {:a {:b {:c 3}}}
+            [1 2 [3 4]]
+            [1 2 [(java.util.Date.)]]]))
 )
