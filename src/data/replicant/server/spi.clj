@@ -136,7 +136,7 @@
   [server coll]
   (if (<= (bounded-count (inc *depth-length*) coll) *depth-length*)
     (if (has-remotes? coll)
-      (remotify-head server coll)
+      (seq (remotify-head server coll))
       coll)
     (map->RSeq (cond-> {:head (remotify-head server coll)
                         :rest (object->rid server (drop *depth-length* coll))}
