@@ -1,6 +1,7 @@
 (ns data.replicant.server.spi
   (:require
-    [data.replicant.server.impl.protocols :as p])
+   [data.replicant.server.impl.protocols :as cache]
+   [data.rds.protocols :as rds])
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
@@ -13,11 +14,11 @@
 
 (defn object->rid
   [server obj]
-  (p/-object->rid server obj))
+  (cache/-object->rid server obj))
 
 (defn rid->object
   [server rid]
-  (p/-rid->object server rid))
+  (cache/-rid->object server rid))
 
 (defn has-remotes?
   "Returns true if remotify of obj would include remote object references."
@@ -26,17 +27,17 @@
             *depth-length* (or (first *remote-lengths*) *depth-length*)
             *remote-lengths* (next *remote-lengths*)]
     (or
-     (p/-has-remotes? obj)
-     (p/-has-remotes? (meta obj)))))
+     (rds/-has-remotes? obj)
+     (rds/-has-remotes? (meta obj)))))
 
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
   (binding [*depth-length* (or (first *remote-lengths*) *depth-length*)
             *remote-lengths* (next *remote-lengths*)]
-    (let [robj (p/-remotify obj server)]
+    (let [robj (rds/-remotify obj server)]
       (if-let [m (meta robj)]
-        (with-meta robj (p/-remotify m server))
+        (with-meta robj (rds/-remotify m server))
         robj))))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
@@ -146,7 +147,7 @@
   [server f]
   (map->RFn {:id (object->rid server f)}))
 
-(extend-protocol p/HasRemote
+(extend-protocol rds/HasRemote
   nil (-has-remotes? [_] false)
   Boolean (-has-remotes? [_] false)
   Object (-has-remotes? [_] true)
@@ -169,7 +170,7 @@
          false
          coll))))
 
-(extend-protocol p/Remotify
+(extend-protocol rds/Remotify
   Object
   (-remotify [obj server] (map->Ref {:id (object->rid server obj)}))
 
