@@ -218,10 +218,6 @@
   RMapEntry (-remotify [x _] x)
   RFn (-remotify [x _] x))
 
-(defn register
-  [server obj]
-  (map->Ref {:id (object->rid server obj)}))
-
 (comment
   (require 'data.replicant.server.impl.cache)
   (def C
