@@ -8,9 +8,9 @@
                   PersistentHashSet PersistentTreeSet PersistentVector IFn]))
 
 (def ^:dynamic *rds-cache*)
-(def ^:dynamic *remote-lengths* [250])
-(def ^:private ^:dynamic *depth-length* 250)
-(def ^:dynamic *remote-depth* 5)
+(def ^:dynamic *remote-lengths* [2500])
+(def ^:private ^:dynamic *depth-length* 2500)
+(def ^:dynamic *remote-depth* 50)
 
 (defn object->rid
   [server obj]
