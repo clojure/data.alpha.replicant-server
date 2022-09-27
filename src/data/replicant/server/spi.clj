@@ -8,9 +8,9 @@
                   PersistentHashSet PersistentTreeSet PersistentVector IFn]))
 
 (def ^:dynamic *rds-cache*)
-(def ^:dynamic *remote-lengths* [2500])
-(def ^:private ^:dynamic *depth-length* 2500)
-(def ^:dynamic *remote-depth* 50)
+(def ^:dynamic *remote-lengths* [250])
+(def ^:private ^:dynamic *depth-length* 250)
+(def ^:dynamic *remote-depth* 5)
 
 (defn object->rid
   [server obj]
@@ -37,7 +37,9 @@
             *remote-lengths* (next *remote-lengths*)]
     (let [robj (rds/-remotify obj server)]
       (if-let [m (meta robj)]
-        (with-meta robj (rds/-remotify m server))
+        (with-meta robj 
+          (binding [*remote-depth* Long/MAX_VALUE]
+            (rds/-remotify m server)))
         robj))))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
