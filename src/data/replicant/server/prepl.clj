@@ -124,9 +124,10 @@
 
 (comment
   (def svr (start-remote-replicant))
-
   (clojure.core.server/stop-server "rds")
 
+  (def f (java.io.File. "src/data/replicant/server/spi.clj"))
+  
   (tap> (vec (range 400)))
   (tap> (zipmap (range 400) (range 400)))
   (->> (range 0 100) (apply hash-map))

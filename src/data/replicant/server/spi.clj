@@ -1,7 +1,6 @@
 (ns data.replicant.server.spi
   (:require
-   [data.replicant.server.impl.protocols :as cache]
-   [data.rds.protocols :as rds])
+   [data.replicant.server.impl.protocols :as proto])
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
@@ -14,11 +13,11 @@
 
 (defn object->rid
   [server obj]
-  (cache/-object->rid server obj))
+  (proto/-object->rid server obj))
 
 (defn rid->object
   [server rid]
-  (cache/-rid->object server rid))
+  (proto/-rid->object server rid))
 
 (defn has-remotes?
   "Returns true if remotify of obj would include remote object references."
@@ -27,19 +26,19 @@
             *depth-length* (or (first *remote-lengths*) *depth-length*)
             *remote-lengths* (next *remote-lengths*)]
     (or
-     (rds/-has-remotes? obj)
-     (rds/-has-remotes? (meta obj)))))
+     (proto/-has-remotes? obj)
+     (proto/-has-remotes? (meta obj)))))
 
 (defn remotify
   "Cache obj as a remote on server. Returns uuid for the obj."
   [obj server]
   (binding [*depth-length* (or (first *remote-lengths*) *depth-length*)
             *remote-lengths* (next *remote-lengths*)]
-    (let [robj (rds/-remotify obj server)]
+    (let [robj (proto/-remotify obj server)]
       (if-let [m (meta robj)]
         (with-meta robj 
           (binding [*remote-depth* Long/MAX_VALUE]
-            (rds/-remotify m server)))
+            (proto/-remotify m server)))
         robj))))
 
 ;; defrecords represent remote wire objects and print as "r/... data"
@@ -149,7 +148,7 @@
   [server f]
   (map->RFn {:id (object->rid server f)}))
 
-(extend-protocol rds/HasRemote
+(extend-protocol proto/HasRemote
   nil (-has-remotes? [_] false)
   Boolean (-has-remotes? [_] false)
   Object (-has-remotes? [_] true)
@@ -172,7 +171,7 @@
          false
          coll))))
 
-(extend-protocol rds/Remotify
+(extend-protocol proto/Remotify
   Object
   (-remotify [obj server] (map->Ref {:id (object->rid server obj)}))
 
@@ -225,7 +224,7 @@
   (def C
     (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
                           (.softValues))]
-      (data.replicant.server.impl.cache/create-remote-cache cache-builder)))
+      (data.replicant.server.impl.proto/create-remote-cache cache-builder)))
 
   (do (println :===================================)
       (binding [*remote-lengths* [3 1]
