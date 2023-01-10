@@ -7,6 +7,8 @@
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
                   PersistentHashSet PersistentTreeSet PersistentVector IFn]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:dynamic *rds-cache*)
 (def ^:dynamic *remote-lengths* [250])
 (def ^:private ^:dynamic *depth-length* 250)
