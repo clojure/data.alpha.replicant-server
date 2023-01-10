@@ -1,6 +1,7 @@
 (ns data.replicant.server.spi
   (:require
-   [data.replicant.server.impl.protocols :as proto])
+   [data.replicant.server.impl.protocols :as proto]
+   [data.replicant.server.impl.cache :as cache])
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
@@ -13,7 +14,13 @@
 
 (defn object->rid
   [server obj]
-  (proto/-object->rid server obj))
+  (.computeIfAbsent
+      cache/identity->rid
+      (System/identityHashCode obj)
+      (-> (fn [_] (let [rid (java.util.UUID/randomUUID)]
+                    (proto/-object->rid server rid obj)
+                    rid))
+          cache/ju-function)))
 
 (defn rid->object
   [server rid]
@@ -49,6 +56,7 @@
 (defrecord RSeq [head rest])
 (defrecord RMapEntry [kv])
 (defrecord RFn [id])
+(defrecord RObject [klass ref])
 
 (defmethod print-method Ref [rref ^Writer w]
   (.write w (str "#r/id "))

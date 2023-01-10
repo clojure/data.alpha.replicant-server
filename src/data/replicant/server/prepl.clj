@@ -122,6 +122,13 @@
   [v]
   (str v))
 
+(defn datafy
+  [obj]
+  ;; datafy => (datafy x) unless it's not RDS-encodable
+  ;; else RDSObject [class:symbol, id:long] OR
+  ;; RDSObject [class:symbol, ref:Relay]
+  )
+
 (comment
   (def svr (start-remote-replicant))
   (clojure.core.server/stop-server "rds")

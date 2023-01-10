@@ -9,7 +9,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn- ju-function
+(defn ju-function
   "Wrap Clojure function as j.u.Function."
   ^Function [f]
   (reify Function
@@ -21,20 +21,15 @@
   (reify RemovalListener
     (onRemoval [_this _k v _cause] (f v))))
 
+(def ^ConcurrentMap identity->rid (ConcurrentHashMap.))
+
 ;; create with create-remote-cache
 (deftype RemoteCache
-  [^ConcurrentMap identity->rid
-   ^Cache rid->obj]
+  [^Cache rid->obj]
   p/Cache
   (-object->rid
-    [_ obj]
-    (.computeIfAbsent
-      identity->rid
-      (System/identityHashCode obj)
-      (-> (fn [_] (let [rid (UUID/randomUUID)]
-                    (.put rid->obj rid obj)
-                    rid))
-        ju-function)))
+    [_ k obj]
+    (.put rid->obj k obj))
   (-rid->object
     [_ k]
     (.getIfPresent rid->obj k)))
@@ -42,11 +37,10 @@
 (defn create-remote-cache
   "Given a caffeine cache builder, return a p/Cache that uses uuids for remote ids."
   [^Caffeine builder]
-  (let [identity->rid (ConcurrentHashMap.)
-        rid->obj (.. builder
+  (let [rid->obj (.. builder
                    (removalListener
                      (-> (fn [obj]
                            (.remove identity->rid (System/identityHashCode obj)))
                        gc-removed-value-listener))
                    build)]
-    (RemoteCache. identity->rid rid->obj)))
+    (RemoteCache. rid->obj)))
