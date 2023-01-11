@@ -96,6 +96,10 @@
   (let [{:keys [id]} rref]
     (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w)))
 
+(defmethod print-method RObject [rref ^Writer w]
+  (.write w (str "#r/object "))
+  (@#'clojure.core/print-map (record->map rref) @#'clojure.core/pr-on w))
+
 (defn remotify-head
   "Remotify the first *depth-length* items in the head of coll"
   [server coll]
@@ -183,7 +187,9 @@
 
 (extend-protocol proto/Remotify
   Object
-  (-remotify [obj server] (map->Ref {:id (object->rid server obj)}))
+  (-remotify [obj server]
+    (map->RObject {:klass (-> obj class .getName symbol)
+                   :ref (map->Ref {:id (object->rid server obj)})}))
 
   MapEntry
   (-remotify
