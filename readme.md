@@ -31,8 +31,16 @@ Also takes map of options (or kwargs in Clojure 1.11+) a la [start-server](https
 
 "Large" data structures (via length or depth) are "remotified" - stored in a cache on the server, passed as a remote reference. When more data is needed, a call is made internally over the remote connection to retrieve more data.
 
-## Copyright and License
+## Contributing 
 
-Copyright © 2023 Cognitect
+[Contributing to Clojure projects](https://clojure.org/community/contributing) requires a signed Contributor Agreement. Pull requests and GitHub issues are not accepted; please use the [core.async JIRA project](TODO) to report problems or enhancements.
 
-Licensed under the TODO
+## License
+
+Copyright © 2017-2022 Rich Hickey and contributors
+
+Distributed under the Eclipse Public License, the same as Clojure.
+
+## Changelog
+
+TODO
