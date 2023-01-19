@@ -193,11 +193,14 @@
          false
          coll))))
 
+(defn- make-robject [obj klass server]
+  (map->RObject {:klass klass
+                 :ref (map->Ref {:id (object->rid server obj)})}))
+
 (extend-protocol proto/Remotify
   Object
   (-remotify [obj server]
-    (map->RObject {:klass (-> obj class .getName symbol)
-                   :ref (map->Ref {:id (object->rid server obj)})}))
+    (make-robject obj (-> obj class .getName symbol) server))
 
   MapEntry
   (-remotify
@@ -210,9 +213,10 @@
   Associative
   (-remotify
     [obj server]
-    (if (instance? IPersistentCollection obj)
-      (remotify-map server obj)
-      (map->Ref {:id (object->rid server obj)})))
+    (cond
+      (instance? clojure.lang.IRecord obj) (make-robject obj (-> obj class .getName symbol) server)
+      (instance? IPersistentCollection obj) (remotify-map server obj)
+      :default (map->Ref {:id (object->rid server obj)})))
 
   PersistentHashSet
   (-remotify [coll server] (remotify-set server coll))
