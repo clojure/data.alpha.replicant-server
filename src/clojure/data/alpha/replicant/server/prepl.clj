@@ -1,8 +1,8 @@
-(ns data.replicant.server.prepl
+(ns clojure.data.alpha.replicant.server.prepl
   (:require
-   [data.replicant.server.spi :as server.spi]
-   [data.replicant.server.reader :as server.reader]
-   [data.replicant.server.impl.cache :as server.cache]
+   [clojure.data.alpha.replicant.server.spi :as server.spi]
+   [clojure.data.alpha.replicant.server.reader :as server.reader]
+   [clojure.data.alpha.replicant.server.impl.cache :as server.cache]
    [clojure.core.server :as server])
   (:import
    [clojure.lang MapEntry])
@@ -59,7 +59,7 @@
    (let [server-socket (server/start-server 
                         {:port   port,
                          :name   "rds",
-                         :accept 'data.replicant.server.prepl/rds-prepl
+                         :accept 'clojure.data.alpha.replicant.server.prepl/rds-prepl
                          :args   [(create-cache)]
                          :server-daemon false})]
      server-socket)))

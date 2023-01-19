@@ -1,7 +1,7 @@
-(ns data.replicant.server.spi
+(ns clojure.data.alpha.replicant.server.spi
   (:require
-   [data.replicant.server.impl.protocols :as proto]
-   [data.replicant.server.impl.cache :as cache])
+   [clojure.data.alpha.replicant.server.impl.protocols :as proto]
+   [clojure.data.alpha.replicant.server.impl.cache :as cache])
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
@@ -236,11 +236,11 @@
   RFn (-remotify [x _] x))
 
 (comment
-  (require 'data.replicant.server.impl.cache)
+  (require 'clojure.data.alpha.replicant.server.impl.cache)
   (def C
     (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
                           (.softValues))]
-      (data.replicant.server.impl.proto/create-remote-cache cache-builder)))
+      (clojure.data.alpha.replicant.server.impl.proto/create-remote-cache cache-builder)))
 
   (do (println :===================================)
       (binding [*remote-lengths* [3 1]
