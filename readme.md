@@ -1,46 +1,57 @@
 # replicant-server
 
-`replicant-server` is a library for remote implementations of the Clojure data structures and a remote REPL server hosted over prepl.
+A Clojure a library providing remote implementations of the Clojure data structures and a remote REPL server hosted over prepl.
 
 ## Rationale
 
+While the ability to connect to Clojure REPLs over a wire is a powerful lever for programmers, the transport of data-structures can bog down an active connection. Replicant works to avoid sending data over the wire until it's requested. "Large" data structures (via length or depth) are "remotified" - stored in a cache on the server, passed as a remote reference. When more data is needed, a call is made internally over the remote connection to retrieve more data.
+
+## Docs
+
+* [API](https://clojure.github.io/replicant-server)
+* [Reference](https://clojure.org/reference/replicant)
+
+# Release Information
+
+Latest release:
+
+[deps.edn](https://clojure.org/reference/deps_and_cli) dependency information:
+
+As a git dep:
+
+```clojure
+io.github.clojure/replicant-server {:git/tag "vTODO" :git/sha "TODO"}
+``` 
 
 ## Usage
 
-### Adding to existing app
-
-Add the replicant dep to your app:
+replicant-server is meant to run in-process. Once added as a dependency, the following will launch an embedded remote PREPL awaiting a [replicant-client](https://github.com/clojure/replicant-client) or socket connection.
 
 ```clojure
-io.github.cognitect-labs/replicant {:git/sha "TODO"}
+(require '[clojure.data.alpha.replicant.server.prepl :as rs])
+(rs/start-replicant)
 ```
 
-And then call:
+The function `start-replicant` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters.
 
-```clojure
-(require '[clojure.data.alpha.replicant.server.prepl :as pr])
-(pr/start-remote-replicant)
-```
+# Developer Information
 
-TODO: better ns
-TODO: better server start function
+[![Tests](https://github.com/clojure/replicant-server/actions/workflows/ci.yml/badge.svg)](https://github.com/clojure/replicant-server/actions/workflows/ci.yml)
 
-Also takes map of options (or kwargs in Clojure 1.11+) a la [start-server](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core.server/start-server), defaults to port 5555.
+* [GitHub project](https://github.com/clojure/replicant-server)
+* [How to contribute](https://clojure.org/community/contributing)
+* [Bug Tracker](https://clojure.atlassian.net/browse/RSERVER)
 
-## Connecting to Replicant
+# Copyright and License
 
-"Large" data structures (via length or depth) are "remotified" - stored in a cache on the server, passed as a remote reference. When more data is needed, a call is made internally over the remote connection to retrieve more data.
+Copyright © 2023 Rich Hickey and contributors
 
-## Contributing 
+All rights reserved. The use and
+distribution terms for this software are covered by the
+[Eclipse Public License 1.0] which can be found in the file
+epl-v10.html at the root of this distribution. By using this software
+in any fashion, you are agreeing to be bound by the terms of this
+license. You must not remove this notice, or any other, from this
+software.
 
-[Contributing to Clojure projects](https://clojure.org/community/contributing) requires a signed Contributor Agreement. Pull requests and GitHub issues are not accepted; please use the [core.async JIRA project](TODO) to report problems or enhancements.
-
-## License
-
-Copyright © 2017-2022 Rich Hickey and contributors
-
-Distributed under the Eclipse Public License, the same as Clojure.
-
-## Changelog
-
-TODO
+[Eclipse Public License 1.0]: http://opensource.org/licenses/eclipse-1.0.php

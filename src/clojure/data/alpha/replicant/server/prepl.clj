@@ -59,9 +59,9 @@
     (server/prepl *in* (outfn-proc *out* rds-cache))))
 
 ;; TODO: parameterize with default depth opts, cache opts
-(defn start-remote-replicant
+(defn start-replicant
   ([]
-   (start-remote-replicant nil))
+   (start-replicant nil))
   ([{:keys [port] :or {port 5555}}]
    (println "Replicant server listening on" port "...")
    (let [server-socket (server/start-server 
@@ -138,7 +138,7 @@
   )
 
 (comment
-  (def svr (start-remote-replicant))
+  (def svr (start-replicant))
   (clojure.core.server/stop-server "rds")
 
   (def f (java.io.File. "src/data/replicant/server/spi.clj"))
@@ -174,4 +174,4 @@
   
   ;; Thread dump
   (.dumpAllThreads (java.lang.management.ManagementFactory/getThreadMXBean) false false)
-  )
+)
