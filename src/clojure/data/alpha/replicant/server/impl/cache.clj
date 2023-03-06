@@ -33,14 +33,14 @@
 
 ;; create with create-remote-cache
 (deftype RemoteCache
-  [^Cache rid->obj]
+  [^Cache cache]
   p/Cache
-  (-object->rid
+  (-put
     [_ k obj]
-    (.put rid->obj k obj))
-  (-rid->object
+    (.put cache k obj))
+  (-get
     [_ k]
-    (.getIfPresent rid->obj k)))
+    (.getIfPresent cache k)))
 
 (defn create-remote-cache
   "Given a caffeine cache builder, return a p/Cache that uses uuids for remote ids."

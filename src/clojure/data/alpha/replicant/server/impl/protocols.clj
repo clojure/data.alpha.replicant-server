@@ -15,6 +15,6 @@
   (-remotify [_ server] "If the object is remotable, returns its ref, else self."))
 
 (defprotocol Cache
-  (-object->rid [server k obj] "Ensure obj in cache, returns rid.")
-  (-rid->object [server key]   "Given rid, return obj or nil if rid not found."))
+  (-put [cache key object] "Given a cache instant, key, and object; puts object at key.")
+  (-get [cache key]        "Given key, return mapped value or nil if key not found."))
 

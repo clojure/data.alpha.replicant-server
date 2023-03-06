@@ -23,18 +23,18 @@
 (def ^:dynamic *remote-depth* 5)
 
 (defn object->rid
-  [server obj]
+  [cache obj]
   (.computeIfAbsent
       cache/identity->rid
       (System/identityHashCode obj)
       (-> (fn [_] (let [rid (java.util.UUID/randomUUID)]
-                    (proto/-object->rid server rid obj)
+                    (proto/-put cache rid obj)
                     rid))
           cache/ju-function)))
 
 (defn rid->object
-  [server rid]
-  (proto/-rid->object server rid))
+  [cache rid]
+  (proto/-get cache rid))
 
 (defn has-remotes?
   "Returns true if remotify of obj would include remote object references."

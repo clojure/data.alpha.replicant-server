@@ -83,7 +83,7 @@
   ([v] v)
   ([v {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remote-lengths*, level server.spi/*remote-depth*}}]
    (if (counted? v)
-     (if (and length (> (count v) length)) ;; level needed in spi
+     (if (and length (> (count v) (first length))) ;; level needed in spi
        (binding [server.spi/*remote-lengths* length
                  server.spi/*remote-depth* level]
          (let [rds (server.spi/remotify v server.spi/*rds-cache*)]
@@ -139,39 +139,8 @@
 
 (comment
   (def svr (start-replicant))
+  (def svr (start-replicant {:port 5556}))
   (clojure.core.server/stop-server "rds")
 
   (def f (java.io.File. "src/data/replicant/server/spi.clj"))
-  
-  (tap> (vec (range 400)))
-  (tap> (zipmap (range 400) (range 400)))
-  (->> (range 0 100) (apply hash-map))
-
-  (binding [server.spi/*remote-lengths* nil]
-    (server.spi/remotify [1 2 3] server.spi/*rds-cache*))
-
-  (def e (.getIfPresent (.rid->obj server.spi/*rds-cache*) #uuid "f58ca48c-a318-4593-821d-8dfa5bb21f30"))
-
-  (first e)
-
-  (read-string (pr-str (server.spi/remotify (range 0 50) rds)))
-
-  ;; test server-side printing
-  (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder) (.softValues))
-        cache (server.cache/create-remote-cache cache-builder)]
-    (alter-var-root #'server.spi/*rds-cache* (constantly cache))
-
-    (binding [*default-data-reader-fn* (fn [tag val]
-                                         (if (= tag 'l/id)
-                                           (server.reader/lid-reader val)
-                                           (throw (RuntimeException. (str "Unknown reader tag:" tag)))))
-              *print-meta* true]
-      (let [val (with-meta [1 2] (zipmap (range 1000) (range 1000)))]
-        (println "val     " val)
-        (let [r (server.spi/remotify val cache)]
-          (println "remotify" r)
-          (println "pr      " (pr-str r))))))
-  
-  ;; Thread dump
-  (.dumpAllThreads (java.lang.management.ManagementFactory/getThreadMXBean) false false)
 )
