@@ -60,7 +60,7 @@
 (defn start-replicant
   ([]
    (start-replicant nil))
-  ([{:keys [port cache] :or {port 5555}}]
+  ([& {:keys [port cache] :or {port 5555}}]
    (println "Replicant server listening on" port "...")
    (let [server-socket (server/start-server 
                         {:port   port,
