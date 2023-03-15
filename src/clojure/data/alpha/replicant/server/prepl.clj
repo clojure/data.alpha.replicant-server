@@ -18,7 +18,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn- create-cache
+(defn- create-default-cache
   "Establishes an RDS environment by building an RDS cache that LRU evicts values based on
   memory demands and installs the server-side readers. Returns the cache."
   []
@@ -52,23 +52,21 @@
 (defn rds-prepl
   "RDS prepl, will be run on a connected socket client thread.
    Uses *in* and *out* streams to serve RDS data to a remote repl."
-  {:added "1.10"}
-  [rds-cache] ;; could also take default depth opts here
+  [rds-cache]
   (binding [server.spi/*rds-cache* rds-cache
             *data-readers* (assoc *data-readers* 'l/id server.reader/lid-reader)]
     (server/prepl *in* (outfn-proc *out* rds-cache))))
 
-;; TODO: parameterize with default depth opts, cache opts
 (defn start-replicant
   ([]
    (start-replicant nil))
-  ([{:keys [port] :or {port 5555}}]
+  ([{:keys [port cache] :or {port 5555}}]
    (println "Replicant server listening on" port "...")
    (let [server-socket (server/start-server 
                         {:port   port,
                          :name   "rds",
                          :accept 'clojure.data.alpha.replicant.server.prepl/rds-prepl
-                         :args   [(create-cache)]
+                         :args   [(or cache (create-default-cache))]
                          :server-daemon false})]
      server-socket)))
 
