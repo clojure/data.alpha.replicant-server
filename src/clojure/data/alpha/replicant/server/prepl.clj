@@ -109,20 +109,22 @@
 ;; remote api
 ;; expects bound: server.spi/*rds-cache*
 (defn entry
-  ([m k] (MapEntry/create k (get m k)))
+  ([m k]
+   (when (contains? m k) (MapEntry/create k (get m k))))
   ([m k {:keys [rds/length rds/level] :as depth-opts :or {length server.spi/*remote-lengths*, level server.spi/*remote-depth*}}]
-   (let [v (get m k)
-         retv (if (counted? v)
-                (if (and length (> (count v) length)) ;; level needed in spi
-                  (binding [server.spi/*remote-lengths* length
-                            server.spi/*remote-depth*  level]
-                    (let [rds (server.spi/remotify (clojure.core/seq v) server.spi/*rds-cache*)]
-                      (if (contains? rds :id)
-                        (assoc rds :id (-> rds meta :r/id))
-                        (annotate rds depth-opts))))
-                  (annotate v depth-opts))
-                (annotate v depth-opts))]
-     (annotate (MapEntry/create k retv) depth-opts))))
+   (when (contains? m k)
+     (let [v (get m k)
+           retv (if (counted? v)
+                  (if (and length (> (count v) length)) ;; level needed in spi
+                    (binding [server.spi/*remote-lengths* length
+                              server.spi/*remote-depth*  level]
+                      (let [rds (server.spi/remotify (clojure.core/seq v) server.spi/*rds-cache*)]
+                        (if (contains? rds :id)
+                          (assoc rds :id (-> rds meta :r/id))
+                          (annotate rds depth-opts))))
+                    (annotate v depth-opts))
+                  (annotate v depth-opts))]
+       (annotate (MapEntry/create k retv) depth-opts)))))
 
 ;; remote api
 ;; expects bound: server.spi/*rds-cache*

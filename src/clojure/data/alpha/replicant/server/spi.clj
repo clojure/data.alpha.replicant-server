@@ -161,7 +161,7 @@
   (if (<= (bounded-count (inc *depth-length*) coll) *depth-length*)
     (if (has-remotes? coll)
       (seq (remotify-head server coll))
-      coll)
+      (map #(remotify % server) coll))
     (map->RSeq (cond-> {:head (remotify-head server coll)
                         :rest (object->rid server (drop *depth-length* coll))}
                  (meta coll) (assoc :meta (meta coll))))))
@@ -220,6 +220,7 @@
 
   PersistentHashSet
   (-remotify [coll server] (remotify-set server coll))
+
   PersistentTreeSet
   (-remotify [coll server] (remotify-set server coll))
 
@@ -248,12 +249,16 @@
   RFn (-remotify [x _] x))
 
 (comment
+  (has-remotes? {:a 1})
+  
   (require 'clojure.data.alpha.replicant.server.impl.cache)
   (def C
     (let [cache-builder (doto (com.github.benmanes.caffeine.cache.Caffeine/newBuilder)
                           (.softValues))]
-      (clojure.data.alpha.replicant.server.impl.proto/create-remote-cache cache-builder)))
+      (clojure.data.alpha.replicant.server.impl.cache/create-remote-cache cache-builder)))
 
+  (remotify-seq C (seq {:a 1 :b 2}))
+  
   (do (println :===================================)
       (binding [*remote-lengths* [3 1]
                 *remote-depth* 1]
