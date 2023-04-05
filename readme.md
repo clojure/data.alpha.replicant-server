@@ -4,7 +4,25 @@ A Clojure a library providing remote implementations of the Clojure data structu
 
 ## Rationale
 
-While the ability to connect to Clojure REPLs over a wire is a powerful lever for programmers, the transport of data-structures can bog down an active connection. Replicant works to avoid sending data over the wire until it's requested. "Large" data structures (via length or depth) are "remotified" - stored in a cache on the server, passed as a remote reference. When more data is needed, a call is made internally over the remote connection to retrieve more data.
+While the ability to connect to Clojure REPLs over a wire is a powerful lever for programmers, the transport of data over an active connection is problemmatic in numerous ways:
+
+- Transport of large or deep collection is slow
+- Transport of lazy sequences forces realization
+- Not all objects are able to transport, some examples being:
+  - Objects with types unavailble to both sides of the wire
+  - Objects holding local resources (e.g. files, sockets, etc.)
+  - Functions
+- Not all objects are printable, and therefore unable to transport
+
+Replicant works to alleviate the issues outlined above by providing the following capabilities:
+
+- Replicant transports large collections by passing partial data over the wire. On the other side, Replicant constructs Remote Data Structures that act as Clojure data for read-only operations and request more data as needed
+- Replicant transports only the head of lazy sequences and on the other side can fetch more data as needed
+- Replicant handles objects that cannot transport by constructing remote references that may later serve as handles for evaluation when requested
+- Replicant transports function references that allow remote invocation
+- Replicant uses a Datafy context to allow extensibility in the way that objects print on the wire
+
+To this end Replicant provides two libraries: [Replicant Server](https://www.github.com/clojure/replicant-server) (this library) and [Replicant Client] (https://www.github.com/clojure/replicant-client).
 
 ## Docs
 
@@ -33,6 +51,16 @@ replicant-server is meant to run in-process. Once added as a dependency, the fol
 ```
 
 The function `start-replicant` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters.
+
+### Use with `add-lib`
+
+Since version 1.12-alpha2, Clojure provides a capability to add dependencies at runtime using the `add-lib` function available in the REPL. If your application process is running in a REPL then you can leverage replicant-server as needed by executing the following:
+
+```clojure
+(add-lib io.github.cognitect-labs/replicant-server {:git/tag "vTODO" :git/sha "TODO"})
+```
+
+This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli) 1.11.1.1267 or later to function. 
 
 # Developer Information
 
