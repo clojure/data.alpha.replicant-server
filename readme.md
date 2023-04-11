@@ -22,12 +22,11 @@ Replicant works to alleviate the issues outlined above by providing the followin
 - Replicant transports function references that allow remote invocation
 - Replicant uses a Datafy context to allow extensibility in the way that objects print on the wire
 
-To this end Replicant provides two libraries: [Replicant Server](https://www.github.com/clojure/replicant-server) (this library) and [Replicant Client] (https://www.github.com/clojure/replicant-client).
+To this end Replicant provides two libraries: [Replicant Server](https://github.com/clojure/data.alpha.replicant-server) (this library) and [Replicant Client](https://github.com/clojure/data.alpha.replicant-client).
 
 ## Docs
 
 * [API](https://clojure.github.io/replicant-server)
-* [Reference](https://clojure.org/reference/replicant)
 
 # Release Information
 
@@ -38,12 +37,12 @@ Latest release:
 As a git dep:
 
 ```clojure
-io.github.clojure/replicant-server {:git/tag "vTODO" :git/sha "TODO"}
+io.github.clojure/data.alpha.replicant-server {:git/tag "vTODO" :git/sha "TODO"}
 ``` 
 
 ## Usage
 
-replicant-server is meant to run in-process. Once added as a dependency, the following will launch an embedded remote PREPL awaiting a [replicant-client](https://github.com/clojure/replicant-client) or socket connection.
+replicant-server is meant to run in-process. Once added as a dependency, the following will launch an embedded remote PREPL awaiting a [replicant-client](https://github.com/clojure/data.alpha.replicant-client) or socket connection.
 
 ```clojure
 (require '[clojure.data.alpha.replicant.server.prepl :as rs])
@@ -57,14 +56,14 @@ The function `start-replicant` takes a map of options allowing customized values
 Since version 1.12-alpha2, Clojure provides a capability to add dependencies at runtime using the `add-lib` function available in the REPL. If your application process is running in a REPL then you can leverage replicant-server as needed by executing the following:
 
 ```clojure
-(add-lib io.github.cognitect-labs/replicant-server {:git/tag "vTODO" :git/sha "TODO"})
+(add-lib io.github.cognitect-labs/data.alpha.replicant-server {:git/tag "vTODO" :git/sha "TODO"})
 ```
 
 This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli) 1.11.1.1267 or later to function. 
 
 # Developer Information
 
-[![Tests](https://github.com/clojure/replicant-server/actions/workflows/ci.yml/badge.svg)](https://github.com/clojure/replicant-server/actions/workflows/ci.yml)
+[![Tests](https://github.com/clojure/replicant-server/actions/workflows/ci.yml/badge.svg)](https://github.com/clojure/data.alpha.replicant-server/actions/workflows/ci.yml)
 
 * [GitHub project](https://github.com/clojure/replicant-server)
 * [How to contribute](https://clojure.org/community/contributing)
