@@ -37,7 +37,7 @@ Latest release:
 As a git dep:
 
 ```clojure
-io.github.clojure/data.alpha.replicant-server {:git/tag "vTODO" :git/sha "TODO"}
+io.github.clojure/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"}
 ``` 
 
 ## Usage
@@ -56,7 +56,7 @@ The function `start-replicant` takes a map of options allowing customized values
 Since version 1.12-alpha2, Clojure provides a capability to add dependencies at runtime using the `add-lib` function available in the REPL. If your application process is running in a REPL then you can leverage replicant-server as needed by executing the following:
 
 ```clojure
-(add-lib io.github.cognitect-labs/data.alpha.replicant-server {:git/tag "vTODO" :git/sha "TODO"})
+(add-lib io.github.cognitect-labs/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"})
 ```
 
 This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli) 1.11.1.1267 or later to function. 
