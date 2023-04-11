@@ -63,9 +63,9 @@ This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli)
 
 # Developer Information
 
-[![Tests](https://github.com/clojure/replicant-server/actions/workflows/ci.yml/badge.svg)](https://github.com/clojure/data.alpha.replicant-server/actions/workflows/ci.yml)
+[![Tests](https://github.com/clojure/data.alpha.replicant-server/actions/workflows/ci.yml/badge.svg)](https://github.com/clojure/data.alpha.replicant-server/actions/workflows/ci.yml)
 
-* [GitHub project](https://github.com/clojure/replicant-server)
+* [GitHub project](https://github.com/clojure/data.alpha.replicant-server)
 * [How to contribute](https://clojure.org/community/contributing)
 * [Bug Tracker](https://clojure.atlassian.net/browse/RSERVER)
 
