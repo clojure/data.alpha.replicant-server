@@ -2,6 +2,8 @@
 
 A Clojure a library providing remote implementations of the Clojure data structures and a remote REPL server hosted over prepl.
 
+This software is considered an alpha release and subject to change.
+
 ## Rationale
 
 While the ability to connect to Clojure REPLs over a wire is a powerful lever for programmers, the transport of data over an active connection is problemmatic in numerous ways:
@@ -34,7 +36,7 @@ Latest release:
 
 [deps.edn](https://clojure.org/reference/deps_and_cli) dependency information:
 
-As a git dep:
+The replicant-server library is intended for use as a git dep:
 
 ```clojure
 io.github.clojure/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"}
@@ -56,7 +58,7 @@ The function `start-replicant` takes a map of options allowing customized values
 Since version 1.12-alpha2, Clojure provides a capability to add dependencies at runtime using the `add-lib` function available in the REPL. If your application process is running in a REPL then you can leverage replicant-server as needed by executing the following:
 
 ```clojure
-(add-lib 'io.github.cognitect-labs/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"})
+(add-lib 'io.github.cognitect-labs/data.alpha.replicant-server)
 ```
 
 This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli) 1.11.1.1267 or later to function. 
@@ -67,7 +69,7 @@ This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli)
 
 * [GitHub project](https://github.com/clojure/data.alpha.replicant-server)
 * [How to contribute](https://clojure.org/community/contributing)
-* [Bug Tracker](https://clojure.atlassian.net/browse/RSERVER)
+* [Bug Tracker](https://clojure.atlassian.net/browse/DRDS)
 
 # Copyright and License
 
