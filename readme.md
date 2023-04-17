@@ -28,7 +28,7 @@ To this end Replicant provides two libraries: [Replicant Server](https://github.
 
 ## Docs
 
-* [API](https://clojure.github.io/replicant-server)
+* [API.md](API.md)
 
 # Release Information
 

@@ -10,5 +10,14 @@
                        :sha "9e35c979860c75555adaff7600070c60004a0f44"}}
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
+  :quickdoc
+  {:deps {org.babashka/cli {:mvn/version "0.4.36"}
+          io.github.borkdude/quickdoc
+          {:deps/root "jvm"
+           :git/sha "c5320cbe311b651a60b47f4d00d7e8ab63291b6e"}}
+   :main-opts ["-m" "babashka.cli.exec" "quickdoc.api" "quickdoc"]
+   :exec-args {:github/repo "https://github.com/clojure/data.alpha.replicant-server"
+               :git/branch "main"
+               :source-paths ["src/clojure/data/alpha/replicant/server/prepl.clj"]}}
   :server {:ns-default clojure.data.alpha.replicant.server.prepl
            :exec-fn start-replicant}}}
