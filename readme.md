@@ -51,7 +51,19 @@ replicant-server is meant to run in-process. Once added as a dependency, the fol
 (rs/start-replicant)
 ```
 
-The function `start-replicant` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters.
+The function `start-replicant` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters. By default the function runs as if the following was passed:
+
+```clojure
+(rs/start-replicant {:name "rds", :address "localhost", :port 5555})
+```
+
+You can stop a named Replicant server using the `stop-replicant` function, passing the name given it at start time:
+
+```clojure
+(rs/stop-replicant "rds")
+```
+
+Stopping an active Replicant server will close all clients connected to it and clear its remote data cache.
 
 ### Use with `add-lib`
 

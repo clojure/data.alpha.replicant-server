@@ -70,6 +70,9 @@
                          :server-daemon false})]
      server-socket)))
 
+(defn stop-replicant [nom]
+  (clojure.core.server/stop-server nom))
+
 (defn- annotate [val & {:as opts}]
   (if (instance? clojure.lang.IObj val)
     (with-meta val {:depth-opts opts})
@@ -140,7 +143,7 @@
 (comment
   (def svr (start-replicant))
   (def svr (start-replicant {:port 5556}))
-  (clojure.core.server/stop-server "rds")
+  (stop-replicant "rds")
 
   (def f (java.io.File. "src/data/replicant/server/spi.clj"))
 )
