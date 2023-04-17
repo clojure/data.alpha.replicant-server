@@ -11,7 +11,8 @@
    [clojure.data.alpha.replicant.server.spi :as server.spi]
    [clojure.data.alpha.replicant.server.reader :as server.reader]
    [clojure.data.alpha.replicant.server.impl.cache :as server.cache]
-   [clojure.core.server :as server])
+   [clojure.core.server :as server]
+   [clojure.datafy :as d])
   (:import
    [clojure.lang MapEntry])
   (:refer-clojure :exclude [seq]))
@@ -32,7 +33,7 @@
     (binding [*print-meta* true]
       (pr-str obj))))
 
-(defn outfn-proc [out rds-cache]
+(defn- outfn-proc [out rds-cache]
   (let [lock (Object.)]
     (fn [m]
       (binding [*out* out, *flush-on-newline* true, *print-readably* true
@@ -50,37 +51,44 @@
                  m)))))))
 
 (defn rds-prepl
-  "RDS prepl, will be run on a connected socket client thread.
-   Uses *in* and *out* streams to serve RDS data to a remote repl."
+  "Uses *in* and *out* streams to serve RDS data given an RDS cache."
   [rds-cache]
   (binding [server.spi/*rds-cache* rds-cache
             *data-readers* (assoc *data-readers* 'l/id server.reader/lid-reader)]
     (server/prepl *in* (outfn-proc *out* rds-cache))))
 
 (defn start-replicant
+  "Local API: Starts a named Replicant server in the current process on a connected socket client thread.
+  By default this function starts a server named \"rds\" listening on localhost:5555 and initializes a
+  default Replicant cache. Callers may pass an options map with keys :server-name, :port, and :cache to
+  override those defaults."
   ([]
    (start-replicant nil))
-  ([& {:keys [port cache] :or {port 5555}}]
+  ([& {:keys [port cache server-name] :or {port 5555, server-name "rds"}}]
    (println "Replicant server listening on" port "...")
    (let [server-socket (server/start-server 
                         {:port   port,
-                         :name   "rds",
+                         :name   server-name,
                          :accept 'clojure.data.alpha.replicant.server.prepl/rds-prepl
                          :args   [(or cache (create-default-cache))]
                          :server-daemon false})]
      server-socket)))
 
-(defn stop-replicant [nom]
-  (clojure.core.server/stop-server nom))
+(defn stop-replicant
+  "Local API: Stops a named Replicant server in the current process. Stopping an active Replicant server
+  closes all clients connected to it and clears its remote data cache."
+  [server-name]
+  (clojure.core.server/stop-server server-name))
 
 (defn- annotate [val & {:as opts}]
   (if (instance? clojure.lang.IObj val)
     (with-meta val {:depth-opts opts})
     val))
 
-;; remote api
-;; expects bound: server.spi/*rds-cache*
 (defn fetch
+  "Remote API: Called by a replicant client to retrieve an object from the cache. Takes an
+  object v and remotifies it if the :rds/lengths and :rds/level values cause a
+  depth options threshold crossings. Expects a bound server.spi/*rds-cache* value."
   ([v] v)
   ([v {:keys [rds/lengths rds/level] :as depth-opts :or {lengths server.spi/*remote-lengths*, level server.spi/*remote-depth*}}]
    (if (counted? v)
@@ -94,9 +102,10 @@
        (annotate v depth-opts))
      (annotate v depth-opts))))
 
-;; remote api
-;; expects bound: server.spi/*rds-cache*
 (defn seq
+  "Remote API: Called by a replicant client to retrieve a seq for a collection. Takes an
+  object v and remotifies it if the :rds/lengths and :rds/level values cause a
+  depth options threshold crossings. Expects a bound server.spi/*rds-cache* value."
   ([v] (clojure.core/seq v))
   ([v {:keys [rds/lengths rds/level] :as depth-opts :or {lengths server.spi/*remote-lengths*, level server.spi/*remote-depth*}}]
    (if (counted? v)
@@ -107,9 +116,10 @@
        (annotate (clojure.core/seq v) depth-opts))
      (annotate (clojure.core/seq v) depth-opts))))
 
-;; remote api
-;; expects bound: server.spi/*rds-cache*
 (defn entry
+  "Remote API: Called by a replicant client to retrieve a value mapped at key k for a collection m. Takes an
+  object v and remotifies it if the :rds/lengths and :rds/level values cause a
+  depth options threshold crossings. Expects a bound server.spi/*rds-cache* value."
   ([m k]
    (when (contains? m k) (MapEntry/create k (get m k))))
   ([m k {:keys [rds/lengths rds/level] :as depth-opts :or {lengths server.spi/*remote-lengths*, level server.spi/*remote-depth*}}]
@@ -130,20 +140,17 @@
 ;; remote api
 ;; expects bound: server.spi/*rds-cache*
 (defn string
+  "Remote API: Called by a replicant client to retrieve a string representation for an object v."
   [v]
   (str v))
 
 (defn datafy
-  [obj]
-  ;; datafy => (datafy x) unless it's not RDS-encodable
-  ;; else RDSObject [class:symbol, id:long] OR
-  ;; RDSObject [class:symbol, ref:Relay]
-  )
+  "Remote API: Called by a replicant client to retrieve a datafy representation for an object v."
+  [v]
+  (d/datafy v))
 
 (comment
   (def svr (start-replicant))
   (def svr (start-replicant {:port 5556}))
   (stop-replicant "rds")
-
-  (def f (java.io.File. "src/data/replicant/server/spi.clj"))
 )
