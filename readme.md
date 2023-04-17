@@ -70,14 +70,12 @@ Stopping an active Replicant server will close all clients connected to it and c
 Since version 1.12-alpha2, Clojure provides a capability to add dependencies at runtime using the `add-lib` function available in the REPL. If your application process is running in a REPL then you can leverage replicant-server as needed by executing the following:
 
 ```clojure
-(add-lib 'io.github.cognitect-labs/data.alpha.replicant-server)
+(add-lib 'io.github.clojure/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"})
 ```
 
 This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli) 1.11.1.1267 or later to function. 
 
 # Developer Information
-
-[![Tests](https://github.com/clojure/data.alpha.replicant-server/actions/workflows/ci.yml/badge.svg)](https://github.com/clojure/data.alpha.replicant-server/actions/workflows/ci.yml)
 
 * [GitHub project](https://github.com/clojure/data.alpha.replicant-server)
 * [How to contribute](https://clojure.org/community/contributing)
