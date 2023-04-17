@@ -1,6 +1,6 @@
 # replicant-server
 
-A Clojure a library providing remote implementations of the Clojure data structures and a remote REPL server hosted over prepl.
+A Clojure library providing remote implementations of the Clojure data structures and a remote REPL server hosted over prepl.
 
 This software is considered an alpha release and subject to change.
 
