@@ -39,7 +39,7 @@ Latest release:
 The replicant-server library is intended for use as a git dep:
 
 ```clojure
-io.github.clojure/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"}
+io.github.clojure/data.alpha.replicant-server {:git/tag "v2023.04.20.01" :git/sha "8c02f64"}
 ``` 
 
 ## Usage
