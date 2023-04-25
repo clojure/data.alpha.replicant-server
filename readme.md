@@ -39,7 +39,7 @@ Latest release:
 The replicant-server library is intended for use as a git dep:
 
 ```clojure
-io.github.clojure/data.alpha.replicant-server {:git/tag "v2023.04.20.01" :git/sha "8c02f64"}
+io.github.clojure/data.alpha.replicant-server {:git/tag "v2023.04.25.01" :git/sha "039bea0"}
 ``` 
 
 ## Usage
@@ -48,13 +48,13 @@ replicant-server is meant to run in-process. Once added as a dependency, the fol
 
 ```clojure
 (require '[clojure.data.alpha.replicant.server.prepl :as replicant])
-(replicant/start)
+(replicant/start :host "hostname")
 ```
 
-The function `start` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters. By default the function runs as if the following was passed:
+The function `start` takes a map of options allowing customized values for `:port` and `:name` parameters. By default the function runs as if the following was passed:
 
 ```clojure
-(replicant/start {:name "rds", :address "localhost", :port 5555})
+(replicant/start {:host "hostname", :name "rds", :port 5555})
 ```
 
 You can stop a named Replicant server using the `stop-replicant` function, passing the name given it at start time:
@@ -64,16 +64,6 @@ You can stop a named Replicant server using the `stop-replicant` function, passi
 ```
 
 Stopping an active Replicant server will close all clients connected to it and clear its remote data cache.
-
-### Use with `add-lib`
-
-Since version 1.12-alpha2, Clojure provides a capability to add dependencies at runtime using the `add-lib` function available in the REPL. If your application process is running in a REPL then you can leverage replicant-server as needed by executing the following:
-
-```clojure
-(add-lib 'io.github.clojure/data.alpha.replicant-server {:git/tag "v0.1.0" :git/sha "6a898ff"})
-```
-
-This capability relies on [Clojure CLI](https://clojure.org/guides/deps_and_cli) 1.11.1.1267 or later to function. 
 
 # Developer Information
 
