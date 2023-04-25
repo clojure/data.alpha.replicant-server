@@ -57,14 +57,15 @@
             *data-readers* (assoc *data-readers* 'l/id server.reader/lid-reader)]
     (server/prepl *in* (outfn-proc *out* rds-cache))))
 
-(defn start-replicant
+(defn start
   "Local API: Starts a named Replicant server in the current process on a connected socket client thread.
   By default this function starts a server named \"rds\" listening on localhost:5555 and initializes a
   default Replicant cache. Callers may pass an options map with keys :server-name, :port, and :cache to
   override those defaults."
   ([]
-   (start-replicant nil))
-  ([& {:keys [port cache server-name] :or {port 5555, server-name "rds"}}]
+   (start nil))
+  ([& {:keys [host port cache server-name] :or {port 5555, server-name "rds"}}]
+   (assert host ":host argument required and expects a string")
    (println "Replicant server listening on" port "...")
    (let [server-socket (server/start-server 
                         {:port   port,
@@ -74,7 +75,7 @@
                          :server-daemon false})]
      server-socket)))
 
-(defn stop-replicant
+(defn stop
   "Local API: Stops a named Replicant server in the current process. Stopping an active Replicant server
   closes all clients connected to it and clears its remote data cache."
   [server-name]
@@ -150,7 +151,7 @@
   (d/datafy v))
 
 (comment
-  (def svr (start-replicant))
-  (def svr (start-replicant {:port 5556}))
-  (stop-replicant "rds")
+  (def svr (start :host "localhost"))
+  (def svr (start {:port 5556}))
+  (stop "rds")
 )

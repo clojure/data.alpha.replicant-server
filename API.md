@@ -78,11 +78,11 @@ Remote API: Called by a replicant client to retrieve a seq for a collection. Tak
   object v and remotifies it if the :rds/lengths and :rds/level values cause a
   depth options threshold crossings. Expects a bound server.spi/*rds-cache* value.
 <br><sub>[source](src/clojure/data/alpha/replicant/server/prepl.clj#L105-L117)</sub>
-## `start-replicant`
+## `start`
 ``` clojure
 
-(start-replicant)
-(start-replicant & {:keys [port cache server-name], :or {port 5555, server-name "rds"}})
+(start)
+(start & {:keys [port cache server-name], :or {port 5555, server-name "rds"}})
 ```
 
 
@@ -91,10 +91,10 @@ Local API: Starts a named Replicant server in the current process on a connected
   default Replicant cache. Callers may pass an options map with keys :server-name, :port, and :cache to
   override those defaults.
 <br><sub>[source](src/clojure/data/alpha/replicant/server/prepl.clj#L60-L75)</sub>
-## `stop-replicant`
+## `stop`
 ``` clojure
 
-(stop-replicant server-name)
+(stop server-name)
 ```
 
 

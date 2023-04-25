@@ -20,4 +20,4 @@
                :git/branch "main"
                :source-paths ["src/clojure/data/alpha/replicant/server/prepl.clj"]}}
   :server {:ns-default clojure.data.alpha.replicant.server.prepl
-           :exec-fn start-replicant}}}
+           :exec-fn start}}}

@@ -47,20 +47,20 @@ io.github.clojure/data.alpha.replicant-server {:git/tag "v2023.04.20.01" :git/sh
 replicant-server is meant to run in-process. Once added as a dependency, the following will launch an embedded remote PREPL awaiting a [replicant-client](https://github.com/clojure/data.alpha.replicant-client) or socket connection.
 
 ```clojure
-(require '[clojure.data.alpha.replicant.server.prepl :as rs])
-(rs/start-replicant)
+(require '[clojure.data.alpha.replicant.server.prepl :as replicant])
+(replicant/start)
 ```
 
-The function `start-replicant` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters. By default the function runs as if the following was passed:
+The function `start` takes a map of options allowing customized values for `:address`, `:port`, and `:name` parameters. By default the function runs as if the following was passed:
 
 ```clojure
-(rs/start-replicant {:name "rds", :address "localhost", :port 5555})
+(replicant/start {:name "rds", :address "localhost", :port 5555})
 ```
 
 You can stop a named Replicant server using the `stop-replicant` function, passing the name given it at start time:
 
 ```clojure
-(rs/stop-replicant "rds")
+(replicant/stop "rds")
 ```
 
 Stopping an active Replicant server will close all clients connected to it and clear its remote data cache.
