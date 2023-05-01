@@ -14,7 +14,8 @@
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
-                  PersistentHashSet PersistentTreeSet PersistentVector IFn]))
+                  PersistentHashSet PersistentTreeSet PersistentVector IFn
+                  PersistentArrayMap PersistentHashMap PersistentStructMap PersistentTreeMap]))
 
 (set! *warn-on-reflection* true)
 
@@ -198,6 +199,12 @@
   (map->RObject {:klass klass
                  :ref (map->Ref {:id (object->rid server obj)})}))
 
+(defn- make-map [obj server]
+  (cond
+    (instance? clojure.lang.IRecord obj) (make-robject obj (-> obj class .getName symbol) server)
+    (instance? IPersistentCollection obj) (remotify-map server obj)
+    :default (map->Ref {:id (object->rid server obj)})))
+
 (extend-protocol proto/Remotify
   Object
   (-remotify [obj server]
@@ -217,10 +224,27 @@
   Associative
   (-remotify
     [obj server]
-    (cond
-      (instance? clojure.lang.IRecord obj) (make-robject obj (-> obj class .getName symbol) server)
-      (instance? IPersistentCollection obj) (remotify-map server obj)
-      :default (map->Ref {:id (object->rid server obj)})))
+    (make-map obj server))
+
+  PersistentArrayMap
+  (-remotify
+    [obj server]
+    (make-map obj server))
+
+  PersistentHashMap
+  (-remotify
+    [obj server]
+    (make-map obj server))
+
+  PersistentStructMap
+  (-remotify
+    [obj server]
+    (make-map obj server))
+
+  PersistentTreeMap
+  (-remotify
+    [obj server]
+    (make-map obj server))
 
   PersistentHashSet
   (-remotify [coll server] (remotify-set server coll))
