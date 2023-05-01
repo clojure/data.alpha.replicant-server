@@ -9,7 +9,8 @@
 (ns clojure.data.alpha.replicant.server.spi
   (:require
    [clojure.data.alpha.replicant.server.impl.protocols :as proto]
-   [clojure.data.alpha.replicant.server.impl.cache :as cache])
+   [clojure.data.alpha.replicant.server.impl.cache :as cache]
+   [clojure.datafy :as d])
   (:import
     [java.io Writer]
     [clojure.lang Keyword Symbol ISeq Associative IPersistentCollection MapEntry
@@ -200,7 +201,10 @@
 (extend-protocol proto/Remotify
   Object
   (-remotify [obj server]
-    (make-robject obj (-> obj class .getName symbol) server))
+    (let [df (d/datafy obj)]
+      (if (identical? obj df)
+        (make-robject obj (-> obj class .getName symbol) server)
+        (remotify df server))))
 
   MapEntry
   (-remotify

@@ -10,6 +10,8 @@
   (:require
     [clojure.data.alpha.replicant.server.spi :as spi]))
 
+(set! *warn-on-reflection* true)
+
 (defn lid-reader
   "Read '#l/id id' and return the cached object"
   [rid]
