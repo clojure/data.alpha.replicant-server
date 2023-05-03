@@ -68,7 +68,8 @@
    (assert host ":host argument required and expects a string")
    (println "Replicant server listening on" port "...")
    (let [server-socket (server/start-server 
-                        {:port   port,
+                        {:address host
+                         :port   port,
                          :name   server-name,
                          :accept 'clojure.data.alpha.replicant.server.prepl/rds-prepl
                          :args   [(or cache (create-default-cache))]
