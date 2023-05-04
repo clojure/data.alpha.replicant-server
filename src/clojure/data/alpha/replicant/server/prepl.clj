@@ -110,7 +110,7 @@
   ([v] (clojure.core/seq v))
   ([v {:keys [rds/lengths rds/level] :as depth-opts :or {lengths server.spi/*remote-lengths*, level server.spi/*remote-depth*}}]
    (if (counted? v)
-     (if (and lengths (> (count v) lengths)) ;; level needed in spi
+     (if (and lengths (> (count v) (first lengths))) ;; level needed in spi
        (binding [server.spi/*remote-lengths* lengths
                  server.spi/*remote-depth* level]
          (annotate (server.spi/remotify (clojure.core/seq v) server.spi/*rds-cache*) depth-opts))
@@ -127,7 +127,7 @@
    (when (contains? m k)
      (let [v (get m k)
            retv (if (counted? v)
-                  (if (and lengths (> (count v) lengths))
+                  (if (and lengths (> (count v) (first lengths)))
                     (binding [server.spi/*remote-lengths* lengths
                               server.spi/*remote-depth*  level]
                       (let [rds (server.spi/remotify (clojure.core/seq v) server.spi/*rds-cache*)]
